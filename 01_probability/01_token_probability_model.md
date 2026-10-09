@@ -4,11 +4,11 @@
 
 设原始文本空间为 $\mathcal S$，模型词表为
 
-$$
+```math
 \mathcal V=\{v_1,v_2,\dots,v_K\},
 \qquad
 K=|\mathcal V|.
-$$
+```
 
 对于固定长度 $T$，token 序列属于笛卡尔积空间 $\mathcal V^T$。所有有限长度的 token 序列构成 Kleene star：
 
@@ -24,9 +24,9 @@ $$
 
 Tokenizer 可以写成映射
 
-$$
+```math
 \tau:\mathcal S\rightarrow\mathcal V^*.
-$$
+```
 
 对于文本 $s\in\mathcal S$，
 
@@ -40,15 +40,15 @@ x_i\in\mathcal V.
 
 若 $x_i=v_k$，再通过索引映射
 
-$$
+```math
 \mathrm{id}:\mathcal V\rightarrow\{1,2,\dots,K\}
-$$
+```
 
 得到
 
-$$
+```math
 \mathrm{id}(x_i)=k.
-$$
+```
 
 因此，原始文本经过 tokenizer 后，被表示为有限词表上的离散 token 序列，并最终转换为整数 token ID 供模型计算。
 
@@ -79,15 +79,15 @@ X_i\in\mathcal V.
 
 对于固定长度 $T$，序列 $x_{1:T}$ 的联合概率为
 
-$$
+```math
 P(X_{1:T}=x_{1:T}),
-$$
+```
 
 通常简写为
 
-$$
+```math
 p(x_{1:T}).
-$$
+```
 
 语言建模的基本目标，就是在离散 token 序列空间上建立概率分布。
 
@@ -96,7 +96,7 @@ $$
 
 根据概率的链式法则，
 
-$$
+```math
 \begin{aligned}
 p(x_{1:T})
 &=
@@ -108,14 +108,14 @@ p(x_T\mid x_{1:T-1})
 \\
 &=
 \prod_{i=1}^{T}
-p(x_i\mid x_{<i}),
+p(x_i\mid x_{\lt i}),
 \end{aligned}
-$$
+```
 
 其中
 
 ```math
-x_{<i}
+x_{\lt i}
 =
 (x_1,x_2,\dots,x_{i-1})
 =
@@ -124,11 +124,11 @@ x_{1:i-1}.
 
 约定
 
-$$
-x_{<1}=\epsilon,
-$$
+```math
+x_{\lt 1}=\epsilon,
+```
 
-则首项也可以统一写成 $p(x_1\mid x_{<1})$。
+则首项也可以统一写成 $p(x_1\mid x_{\lt 1})$。
 
 最终得到
 
@@ -137,44 +137,44 @@ $$
 p(x_{1:T})
 =
 \prod_{i=1}^{T}
-p(x_i\mid x_{<i})
+p(x_i\mid x_{\lt i})
 }
 ```
 
 链式法则本身是概率恒等式，并没有引入额外的独立性假设。自回归语言模型所做的是选择从左到右的顺序，对每一个条件概率
 
-$$
-p(x_i\mid x_{<i})
-$$
+```math
+p(x_i\mid x_{\lt i})
+```
 
 进行参数化和学习。
 
 于是，序列建模被转化为连续的 next-token prediction：
 
-$$
-x_{<i}
+```math
+x_{\lt i}
 \longrightarrow
 x_i.
-$$
+```
 
 
 ## 4. BOS 与序列起点
 
 实际语言模型通常会引入起始 token
 
-$$
+```math
 \mathrm{BOS}.
-$$
+```
 
 此时，
 
-$$
+```math
 p(x_1\mid\mathrm{BOS}),
-$$
+```
 
-$$
+```math
 p(x_2\mid\mathrm{BOS},x_1),
-$$
+```
 
 并一般写为
 
@@ -182,7 +182,7 @@ $$
 p(x_{1:T}\mid\mathrm{BOS})
 =
 \prod_{i=1}^{T}
-p(x_i\mid\mathrm{BOS},x_{<i}).
+p(x_i\mid\mathrm{BOS},x_{\lt i}).
 ```
 
 在理论推导中，通常将 BOS 视为初始上下文的一部分，仍简写为
@@ -191,7 +191,7 @@ p(x_i\mid\mathrm{BOS},x_{<i}).
 p(x_{1:T})
 =
 \prod_{i=1}^{T}
-p(x_i\mid x_{<i}).
+p(x_i\mid x_{\lt i}).
 ```
 
 BOS 的作用是为序列提供统一的起始上下文。
@@ -201,30 +201,30 @@ BOS 的作用是为序列提供统一的起始上下文。
 
 固定长度为 $T$ 时，前面的概率分解已经足够。但真实语言模型需要建模不同长度的序列，因此通常还会引入结束 token
 
-$$
+```math
 \mathrm{EOS}.
-$$
+```
 
 完整序列可以表示为
 
-$$
+```math
 (x_1,x_2,\dots,x_T,\mathrm{EOS}).
-$$
+```
 
 包含 BOS 时，其概率为
 
-$$
+```math
 \begin{aligned}
 &p(x_{1:T},\mathrm{EOS}\mid\mathrm{BOS})
 \\
 &=
 \left[
 \prod_{i=1}^{T}
-p(x_i\mid\mathrm{BOS},x_{<i})
+p(x_i\mid\mathrm{BOS},x_{\lt i})
 \right]
 p(\mathrm{EOS}\mid\mathrm{BOS},x_{1:T}).
 \end{aligned}
-$$
+```
 
 省略 BOS 后，
 
@@ -233,7 +233,7 @@ p(x_{1:T},\mathrm{EOS})
 =
 \left[
 \prod_{i=1}^{T}
-p(x_i\mid x_{<i})
+p(x_i\mid x_{\lt i})
 \right]
 p(\mathrm{EOS}\mid x_{1:T}).
 ```
@@ -251,62 +251,62 @@ BOS、EOS 等特殊 token 是否计入 $K$，取决于具体 tokenizer 和模型
 p_\theta(x_{1:T})
 =
 \prod_{i=1}^{T}
-p_\theta(x_i\mid x_{<i}),
+p_\theta(x_i\mid x_{\lt i}),
 ```
 
 其中 $\theta$ 表示模型中所有可学习参数。
 
-对于位置 $i$，模型根据上下文 $x_{<i}$ 定义下一个 token 在整个词表上的条件概率：
+对于位置 $i$，模型根据上下文 $x_{\lt i}$ 定义下一个 token 在整个词表上的条件概率：
 
-$$
+```math
 p_\theta
 \left(
 X_i=v_k
 \mid
-X_{<i}=x_{<i}
+X_{\lt i}=x_{\lt i}
 \right),
 \qquad
 k=1,\dots,K.
-$$
+```
 
 简写为
 
-$$
-p_\theta(X_i=v_k\mid x_{<i}).
-$$
+```math
+p_\theta(X_i=v_k\mid x_{\lt i}).
+```
 
 这些概率满足
 
-$$
-p_\theta(X_i=v_k\mid x_{<i})\ge 0,
-$$
+```math
+p_\theta(X_i=v_k\mid x_{\lt i})\ge 0,
+```
 
 以及
 
 ```math
 \sum_{k=1}^{K}
-p_\theta(X_i=v_k\mid x_{<i})
+p_\theta(X_i=v_k\mid x_{\lt i})
 =
 1.
 ```
 
 因此，
 
-$$
-X_i\mid x_{<i}
+```math
+X_i\mid x_{\lt i}
 \sim
 \mathrm{Categorical}
 \left(
 p_{i,1},p_{i,2},\dots,p_{i,K}
 \right),
-$$
+```
 
 其中
 
 ```math
 p_{i,k}
 =
-p_\theta(X_i=v_k\mid x_{<i}).
+p_\theta(X_i=v_k\mid x_{\lt i}).
 ```
 
 语言模型的核心问题由此变为：**给定上下文，如何得到词表上的这 $K$ 个概率？**
@@ -322,7 +322,7 @@ p_\theta(X_i=v_k\mid x_{<i}).
 p_\theta(x_{1:T})
 =
 \prod_{i=1}^{T}
-p_\theta(x_i\mid x_{<i}).
+p_\theta(x_i\mid x_{\lt i}).
 ```
 
 最大似然训练要求
@@ -346,19 +346,19 @@ p_\theta(x_{1:T})
 
 利用乘积的对数性质，
 
-$$
+```math
 \begin{aligned}
 \log p_\theta(x_{1:T})
 &=
 \log
 \prod_{i=1}^{T}
-p_\theta(x_i\mid x_{<i})
+p_\theta(x_i\mid x_{\lt i})
 \\
 &=
 \sum_{i=1}^{T}
-\log p_\theta(x_i\mid x_{<i}).
+\log p_\theta(x_i\mid x_{\lt i}).
 \end{aligned}
-$$
+```
 
 因此可以等价地最小化负对数似然：
 
@@ -370,7 +370,7 @@ $$
 -
 \sum_{i=1}^{T}
 \log
-p_\theta(x_i\mid x_{<i})
+p_\theta(x_i\mid x_{\lt i})
 }
 ```
 
@@ -425,7 +425,7 @@ p_\theta
 \left(
 x_i^{(n)}
 \mid
-x_{<i}^{(n)}
+x_{\lt i}^{(n)}
 \right).
 ```
 
@@ -441,7 +441,7 @@ p_\theta
 \left(
 x_i^{(n)}
 \mid
-x_{<i}^{(n)}
+x_{\lt i}^{(n)}
 \right).
 ```
 
@@ -459,7 +459,7 @@ p_\theta
 \left(
 x_i^{(n)}
 \mid
-x_{<i}^{(n)}
+x_{\lt i}^{(n)}
 \right)
 }
 ```
@@ -479,7 +479,7 @@ p_\theta
 \left(
 x_i^{(n)}
 \mid
-x_{<i}^{(n)}
+x_{\lt i}^{(n)}
 \right)
 }
 ```
@@ -506,7 +506,7 @@ p_\theta
 \left(
 x_i^{(n)}
 \mid
-x_{<i}^{(n)}
+x_{\lt i}^{(n)}
 \right)
 }
 ```
@@ -522,18 +522,18 @@ x_{<i}^{(n)}
 
 对于位置 $i$，模型需要计算
 
-$$
-p_\theta(X_i=v_k\mid x_{<i}),
+```math
+p_\theta(X_i=v_k\mid x_{\lt i}),
 \qquad
 k=1,\dots,K.
-$$
+```
 
 首先，将上下文编码为 $d$ 维隐藏状态：
 
 ```math
 h_i
 =
-f_\theta(x_{<i}),
+f_\theta(x_{\lt i}),
 \qquad
 h_i\in\mathbb R^d.
 ```
@@ -550,11 +550,11 @@ W_{\mathrm{out}}h_i+b_{\mathrm{out}},
 
 其中
 
-$$
+```math
 W_{\mathrm{out}}\in\mathbb R^{K\times d},
 \qquad
 b_{\mathrm{out}}\in\mathbb R^K,
-$$
+```
 
 因此
 
@@ -567,9 +567,9 @@ z_i
 
 第 $k$ 个分量 $z_{i,k}$ 称为 **logit**。Logit 是未归一化分数，可以取任意实数：
 
-$$
+```math
 z_{i,k}\in\mathbb R.
-$$
+```
 
 利用 Softmax 将 logits 映射为概率：
 
@@ -590,17 +590,17 @@ p_{i,k}
 
 此时
 
-$$
-p_{i,k}>0,
+```math
+p_{i,k}\gt 0,
 \qquad
 \sum_{k=1}^{K}p_{i,k}=1.
-$$
+```
 
 于是
 
 ```math
 \boxed{
-p_\theta(X_i=v_k\mid x_{<i})
+p_\theta(X_i=v_k\mid x_{\lt i})
 =
 \frac{\exp(z_{i,k})}
 {\sum_{j=1}^{K}\exp(z_{i,j})}
@@ -609,9 +609,9 @@ p_\theta(X_i=v_k\mid x_{<i})
 
 整个过程可以写成
 
-$$
+```math
 \boxed{
-x_{<i}
+x_{\lt i}
 \longrightarrow
 h_i
 \longrightarrow
@@ -619,11 +619,11 @@ z_i
 \longrightarrow
 p_i
 }
-$$
+```
 
 即
 
-$$
+```math
 \text{context}
 \rightarrow
 \text{hidden state}
@@ -631,7 +631,7 @@ $$
 \text{logits}
 \rightarrow
 \text{probabilities}.
-$$
+```
 
 ### Shifted Next-Token Prediction
 
@@ -661,9 +661,9 @@ W_{\mathrm{out}}h_i+b_{\mathrm{out}}
 
 这与理论记号
 
-$$
-p_\theta(x_i\mid x_{<i})
-$$
+```math
+p_\theta(x_i\mid x_{\lt i})
+```
 
 只是索引方式不同，本质上都是 next-token prediction。
 
@@ -674,11 +674,11 @@ $$
 
 考虑位置 $i$，设真实 token 为
 
-$$
+```math
 x_i^{(n)}=v_c,
 \qquad
 c\in\{1,\dots,K\}.
-$$
+```
 
 模型预测分布为
 
@@ -697,7 +697,7 @@ p_\theta
 \left(
 X_i=v_j
 \mid
-x_{<i}^{(n)}
+x_{\lt i}^{(n)}
 \right).
 ```
 
@@ -730,7 +730,7 @@ y_{i,j}
 
 则目标分布与预测分布之间的交叉熵为
 
-$$
+```math
 \begin{aligned}
 H(y_i,p_i)
 &=
@@ -740,7 +740,7 @@ y_{i,j}\log p_{i,j}
 &=
 -\log p_{i,c}.
 \end{aligned}
-$$
+```
 
 因此，在 one-hot hard label 下，
 
@@ -780,7 +780,7 @@ p_\theta
 \left(
 x_i^{(n)}
 \mid
-x_{<i}^{(n)}
+x_{\lt i}^{(n)}
 \right)
 }
 ```
@@ -800,7 +800,7 @@ p_{i,c}
 
 则单个 token 的损失为
 
-$$
+```math
 \begin{aligned}
 \ell_i
 &=
@@ -817,7 +817,7 @@ $$
 \log
 \sum_{j=1}^{K}\exp(z_{i,j}).
 \end{aligned}
-$$
+```
 
 即
 
@@ -835,11 +835,11 @@ $$
 
 实际实现通常直接从 logits 计算 cross-entropy，而不是显式执行
 
-$$
+```math
 \mathrm{Softmax}
 \rightarrow
 \log,
-$$
+```
 
 从而利用 `log-softmax` 或 `logsumexp` 获得更好的数值稳定性。
 
@@ -847,9 +847,9 @@ $$
 
 最终，整个计算过程可以概括为
 
-$$
+```math
 \boxed{
-x_{<i}
+x_{\lt i}
 \longrightarrow
 h_i
 \longrightarrow
@@ -859,11 +859,11 @@ p_i
 \longrightarrow
 -\log p_{i,c}
 }
-$$
+```
 
 或者
 
-$$
+```math
 \boxed{
 \text{Context}
 \rightarrow
@@ -875,17 +875,17 @@ $$
 \rightarrow
 \text{Cross-Entropy}
 }
-$$
+```
 
 而从概率建模的角度，
 
-$$
+```math
 \boxed{
 \text{最大化训练数据的对数似然}
 \quad\Longleftrightarrow\quad
 \text{最小化平均 Token-level NLL}
 }
-$$
+```
 
 在 one-hot token supervision 下，又有
 

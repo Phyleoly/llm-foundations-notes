@@ -24,9 +24,9 @@
 
 概率章节只将 tokenizer 抽象为
 
-$$
+```math
 \tau:\mathcal S\rightarrow\mathcal V^*.
-$$
+```
 
 本章负责解释这个映射在实际 tokenizer 中如何构造。
 

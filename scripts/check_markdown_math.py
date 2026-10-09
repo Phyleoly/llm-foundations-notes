@@ -5,11 +5,12 @@ The scanner is context-aware: it ignores ordinary fenced code blocks, inline
 code spans, HTML comments, and raw HTML code-like blocks.  Automatic fixes are
 limited to deterministic transformations:
 
-* Convert ``$$`` blocks containing a standalone ``=`` or ``-`` line to a
-  GitHub-supported ``math`` fence so GFM cannot parse the line as a Setext
-  heading.
+* Convert multiline ``$$`` blocks to GitHub-supported ``math`` fences so GFM
+  cannot parse formula lines or consume TeX backslash escapes.
 * Replace a small allowlist of ``\\operatorname{name}`` uses with
   ``\\mathrm{name}``.  Unknown operator names are reported but never changed.
+* Replace raw ``<``/``>`` comparison symbols (including HTML entity forms) with
+  ``\\lt``/``\\gt`` so GitHub's HTML layer cannot corrupt the TeX source.
 """
 
 from __future__ import annotations
@@ -24,10 +25,10 @@ from typing import Iterable, Sequence
 
 FENCE_OPEN_RE = re.compile(r"^( {0,3})(`{3,}|~{3,})(.*)$")
 DISPLAY_DELIMITER_RE = re.compile(r"^(?P<indent> {0,3})\$\$[ \t]*$")
-SETEXT_RE = re.compile(r"^ {0,3}(?:=+|-+)[ \t]*$")
 OPERATOR_RE = re.compile(
     r"\\operatorname(?P<star>\*)?[ \t]*\{(?P<name>[^{}]+)\}"
 )
+UNSAFE_ANGLE_RE = re.compile(r"[<>]|&(?P<entity>lt|gt);")
 ENVIRONMENT_RE = re.compile(r"\\(?P<kind>begin|end)\{(?P<name>[^{}]+)\}")
 RAW_HTML_OPEN_RE = re.compile(r"<(pre|script|style|textarea)\b", re.IGNORECASE)
 INLINE_CODE_HTML_RE = re.compile(
@@ -229,6 +230,38 @@ def _operator_issues_and_replacement(
     return issues, OPERATOR_RE.sub(replace, tex), replacements
 
 
+def _angle_issues_and_replacement(
+    tex: str,
+    *,
+    path: str,
+    line: int,
+    apply_fixes: bool,
+) -> tuple[list[Issue], str, int]:
+    issues: list[Issue] = []
+    replacements = 0
+
+    def replace(match: re.Match[str]) -> str:
+        nonlocal replacements
+        source = match.group(0)
+        symbol = match.group("entity") or source
+        command = "lt" if symbol in {"<", "lt"} else "gt"
+        issues.append(
+            Issue(
+                path,
+                line,
+                "MATH007",
+                f"raw '{source}' may be HTML-escaped inside GitHub math; use \\{command}",
+                fixable=True,
+            )
+        )
+        if apply_fixes:
+            replacements += 1
+            return rf"\{command} "
+        return source
+
+    return issues, UNSAFE_ANGLE_RE.sub(replace, tex), replacements
+
+
 def _latex_structure_issues(
     body: Sequence[tuple[int, int, str]], path: str, fallback_line: int
 ) -> list[Issue]:
@@ -295,21 +328,13 @@ def analyze_document(text: str, path: str = "<text>", apply_fixes: bool = False)
 
     def inspect_math(block: MathBlock, closing_index: int | None) -> None:
         nonlocal fix_count
-        risky_line = next(
-            (
-                line_number
-                for _, line_number, content in block.body
-                if SETEXT_RE.fullmatch(content)
-            ),
-            None,
-        )
-        if block.kind == "dollar" and risky_line is not None:
+        if block.kind == "dollar":
             issues.append(
                 Issue(
                     path,
-                    risky_line,
+                    block.start_line,
                     "MATH001",
-                    "standalone '=' or '-' can turn this $$ block into a GFM Setext heading",
+                    "multiline $$ math is vulnerable to GFM/HTML preprocessing; use a math fence",
                     fixable=True,
                 )
             )
@@ -336,8 +361,17 @@ def analyze_document(text: str, path: str = "<text>", apply_fixes: bool = False)
                 apply_fixes=apply_fixes,
             )
             issues.extend(operator_issues)
-            if count:
+            angle_issues, replacement, angle_count = _angle_issues_and_replacement(
+                replacement,
+                path=path,
+                line=line_number,
+                apply_fixes=apply_fixes,
+            )
+            issues.extend(angle_issues)
+            count += angle_count
+            if replacement != content:
                 replacements[index] = _with_original_ending(replacement, lines[index])
+            if count:
                 fix_count += count
 
         issues.extend(_latex_structure_issues(block.body, path, block.start_line))
@@ -420,6 +454,14 @@ def analyze_document(text: str, path: str = "<text>", apply_fixes: bool = False)
                 apply_fixes=apply_fixes,
             )
             issues.extend(operator_issues)
+            angle_issues, replacement, angle_count = _angle_issues_and_replacement(
+                replacement,
+                path=path,
+                line=line_number,
+                apply_fixes=apply_fixes,
+            )
+            issues.extend(angle_issues)
+            count += angle_count
             fix_count += count
             if count:
                 inline_replacements.append((start + 1, end - 1, replacement))
