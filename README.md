@@ -85,3 +85,19 @@ NN_topic_name.md
 - 图片等静态资源统一放入 [`assets/`](./assets/README.md)。
 
 详细写作约定见 [STYLE_GUIDE.md](./STYLE_GUIDE.md)。
+
+## 文档检查
+
+检查全部 Markdown 数学公式的 GFM 兼容性：
+
+```bash
+python scripts/check_markdown_math.py .
+```
+
+使用 `--fix` 可以修复确定性的公式围栏和已列入白名单的宏兼容问题。其他问题只报告，不会自动改写：
+
+```bash
+python scripts/check_markdown_math.py --fix .
+```
+
+该检查也会由 GitHub Actions 在 push 和 pull request 时自动运行。

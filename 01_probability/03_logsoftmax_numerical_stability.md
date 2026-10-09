@@ -11,7 +11,7 @@ $$
 其中
 
 $$
-p_i=\operatorname{softmax}(z_i).
+p_i=\mathrm{softmax}(z_i).
 $$
 
 从数学表达式看，可以先计算 Softmax，再对真实类别对应的概率取对数。但在有限精度浮点计算中，这种直接实现可能产生数值溢出或下溢。
@@ -26,12 +26,12 @@ $$
 
 则 Softmax 在第 $i$ 个位置的输出为
 
-$$
-\operatorname{softmax}(z)_i
+```math
+\mathrm{softmax}(z)_i
 =
 \frac{\exp z_i}
 {\sum_{j=1}^{n}\exp z_j}.
-$$
+```
 
 如果某个 logit 很大，例如 $z_i=1000$，直接计算时将出现 $e^{1000}$。该数值可能超出浮点数的可表示范围，从而导致数值溢出，使 Softmax 的计算结果失效。
 
@@ -41,7 +41,7 @@ $$
 
 $$
 \begin{aligned}
-\operatorname{logsoftmax}(z)_i
+\mathrm{logsoftmax}(z)_i
 &=
 \log\frac{\exp z_i}{\sum_{j=1}^{n}\exp z_j}\\
 &=
@@ -51,11 +51,11 @@ $$
 
 其中第二项
 
-$$
-\operatorname{LSE}(z)
+```math
+\mathrm{LSE}(z)
 =
 \log\sum_{j=1}^{n}\exp z_j
-$$
+```
 
 称为 **LogSumExp**。
 
@@ -73,7 +73,7 @@ $$
 
 $$
 \begin{aligned}
-\operatorname{LSE}(z)
+\mathrm{LSE}(z)
 &=
 \log\sum_{j=1}^{n}\exp z_j\\
 &=
@@ -109,13 +109,13 @@ $$
 
 Stable Softmax 使用相同的平移技巧。Softmax 对所有 logits 同时减去同一个常数保持不变：
 
-$$
-\operatorname{softmax}(z)
+```math
+\mathrm{softmax}(z)
 =
-\operatorname{softmax}(z-c),
+\mathrm{softmax}(z-c),
 \qquad
 c\in\mathbb R.
-$$
+```
 
 取
 
@@ -127,7 +127,7 @@ $$
 
 $$
 \begin{aligned}
-\operatorname{softmax}(z)_i
+\mathrm{softmax}(z)_i
 &=
 \frac{\exp z_i}{\sum_{j=1}^{n}\exp z_j}\\
 &=

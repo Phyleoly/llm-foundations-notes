@@ -12,13 +12,13 @@ $$
 
 对于固定长度 $T$，token 序列属于笛卡尔积空间 $\mathcal V^T$。所有有限长度的 token 序列构成 Kleene star：
 
-$$
+```math
 \mathcal V^*
 =
 \bigcup_{T=0}^{\infty}\mathcal V^T,
 \qquad
 \mathcal V^0=\{\epsilon\},
-$$
+```
 
 其中 $\epsilon$ 表示空序列。
 
@@ -30,24 +30,24 @@ $$
 
 对于文本 $s\in\mathcal S$，
 
-$$
+```math
 \tau(s)
 =
 (x_1,x_2,\dots,x_T),
 \qquad
 x_i\in\mathcal V.
-$$
+```
 
 若 $x_i=v_k$，再通过索引映射
 
 $$
-\operatorname{id}:\mathcal V\rightarrow\{1,2,\dots,K\}
+\mathrm{id}:\mathcal V\rightarrow\{1,2,\dots,K\}
 $$
 
 得到
 
 $$
-\operatorname{id}(x_i)=k.
+\mathrm{id}(x_i)=k.
 $$
 
 因此，原始文本经过 tokenizer 后，被表示为有限词表上的离散 token 序列，并最终转换为整数 token ID 供模型计算。
@@ -59,21 +59,21 @@ $$
 
 给定一个观测到的 token 序列
 
-$$
+```math
 x_{1:T}
 =
 (x_1,x_2,\dots,x_T),
-$$
+```
 
 定义对应的随机变量序列
 
-$$
+```math
 X_{1:T}
 =
 (X_1,X_2,\dots,X_T),
 \qquad
 X_i\in\mathcal V.
-$$
+```
 
 其中，大写 $X_i$ 表示随机变量，小写 $x_i$ 表示其具体观测值。
 
@@ -114,13 +114,13 @@ $$
 
 其中
 
-$$
+```math
 x_{<i}
 =
 (x_1,x_2,\dots,x_{i-1})
 =
 x_{1:i-1}.
-$$
+```
 
 约定
 
@@ -132,14 +132,14 @@ $$
 
 最终得到
 
-$$
+```math
 \boxed{
 p(x_{1:T})
 =
 \prod_{i=1}^{T}
 p(x_i\mid x_{<i})
 }
-$$
+```
 
 链式法则本身是概率恒等式，并没有引入额外的独立性假设。自回归语言模型所做的是选择从左到右的顺序，对每一个条件概率
 
@@ -178,21 +178,21 @@ $$
 
 并一般写为
 
-$$
+```math
 p(x_{1:T}\mid\mathrm{BOS})
 =
 \prod_{i=1}^{T}
 p(x_i\mid\mathrm{BOS},x_{<i}).
-$$
+```
 
 在理论推导中，通常将 BOS 视为初始上下文的一部分，仍简写为
 
-$$
+```math
 p(x_{1:T})
 =
 \prod_{i=1}^{T}
 p(x_i\mid x_{<i}).
-$$
+```
 
 BOS 的作用是为序列提供统一的起始上下文。
 
@@ -228,7 +228,7 @@ $$
 
 省略 BOS 后，
 
-$$
+```math
 p(x_{1:T},\mathrm{EOS})
 =
 \left[
@@ -236,7 +236,7 @@ p(x_{1:T},\mathrm{EOS})
 p(x_i\mid x_{<i})
 \right]
 p(\mathrm{EOS}\mid x_{1:T}).
-$$
+```
 
 EOS 使模型不仅学习“下一个 token 是什么”，还学习“序列是否应该在此结束”，因而参与了序列长度分布的建模。
 
@@ -247,12 +247,12 @@ BOS、EOS 等特殊 token 是否计入 $K$，取决于具体 tokenizer 和模型
 
 真实数据可以看作来自未知分布 $p_{\mathrm{data}}$。语言模型使用参数化分布 $p_\theta$ 对其进行近似：
 
-$$
+```math
 p_\theta(x_{1:T})
 =
 \prod_{i=1}^{T}
 p_\theta(x_i\mid x_{<i}),
-$$
+```
 
 其中 $\theta$ 表示模型中所有可学习参数。
 
@@ -283,19 +283,19 @@ $$
 
 以及
 
-$$
+```math
 \sum_{k=1}^{K}
 p_\theta(X_i=v_k\mid x_{<i})
 =
 1.
-$$
+```
 
 因此，
 
 $$
 X_i\mid x_{<i}
 \sim
-\operatorname{Categorical}
+\mathrm{Categorical}
 \left(
 p_{i,1},p_{i,2},\dots,p_{i,K}
 \right),
@@ -303,11 +303,11 @@ $$
 
 其中
 
-$$
+```math
 p_{i,k}
 =
 p_\theta(X_i=v_k\mid x_{<i}).
-$$
+```
 
 语言模型的核心问题由此变为：**给定上下文，如何得到词表上的这 $K$ 个概率？**
 
@@ -316,33 +316,33 @@ $$
 
 对于观测到的训练序列 $x_{1:T}$，模型赋予它的似然为
 
-$$
-\operatorname{Lik}(\theta;x_{1:T})
+```math
+\mathrm{Lik}(\theta;x_{1:T})
 =
 p_\theta(x_{1:T})
 =
 \prod_{i=1}^{T}
 p_\theta(x_i\mid x_{<i}).
-$$
+```
 
 最大似然训练要求
 
-$$
+```math
 \theta^\star
 =
 \arg\max_\theta
 p_\theta(x_{1:T}).
-$$
+```
 
 由于 $\log$ 严格单调递增，
 
-$$
+```math
 \arg\max_\theta
 p_\theta(x_{1:T})
 =
 \arg\max_\theta
 \log p_\theta(x_{1:T}).
-$$
+```
 
 利用乘积的对数性质，
 
@@ -362,7 +362,7 @@ $$
 
 因此可以等价地最小化负对数似然：
 
-$$
+```math
 \boxed{
 \mathcal L_{\mathrm{NLL}}
 (\theta;x_{1:T})
@@ -372,24 +372,24 @@ $$
 \log
 p_\theta(x_i\mid x_{<i})
 }
-$$
+```
 
 即
 
-$$
+```math
 \arg\max_\theta
 \log p_\theta(x_{1:T})
 =
 \arg\min_\theta
 \mathcal L_{\mathrm{NLL}}(\theta;x_{1:T}).
-$$
+```
 
 
 ## 8. 从单个序列到训练数据集
 
 设训练集为
 
-$$
+```math
 \mathcal D
 =
 \left\{
@@ -398,13 +398,13 @@ x_{1:T_2}^{(2)},
 \dots,
 x_{1:T_N}^{(N)}
 \right\},
-$$
+```
 
 其中第 $n$ 个序列长度为 $T_n$。
 
 在标准最大似然推导中，将训练序列视为独立观测样本，则
 
-$$
+```math
 p_\theta(\mathcal D)
 =
 \prod_{n=1}^{N}
@@ -412,11 +412,11 @@ p_\theta
 \left(
 x_{1:T_n}^{(n)}
 \right),
-$$
+```
 
 进一步展开为
 
-$$
+```math
 p_\theta(\mathcal D)
 =
 \prod_{n=1}^{N}
@@ -427,11 +427,11 @@ x_i^{(n)}
 \mid
 x_{<i}^{(n)}
 \right).
-$$
+```
 
 取对数得到
 
-$$
+```math
 \log p_\theta(\mathcal D)
 =
 \sum_{n=1}^{N}
@@ -443,11 +443,11 @@ x_i^{(n)}
 \mid
 x_{<i}^{(n)}
 \right).
-$$
+```
 
 最大似然估计为
 
-$$
+```math
 \boxed{
 \theta^\star
 =
@@ -462,11 +462,11 @@ x_i^{(n)}
 x_{<i}^{(n)}
 \right)
 }
-$$
+```
 
 等价地，
 
-$$
+```math
 \boxed{
 \theta^\star
 =
@@ -482,19 +482,19 @@ x_i^{(n)}
 x_{<i}^{(n)}
 \right)
 }
-$$
+```
 
 实际训练时，通常按参与损失计算的有效 target token 数量进行平均。定义
 
-$$
+```math
 M
 =
 \sum_{n=1}^{N}T_n,
-$$
+```
 
 则平均 token-level NLL 为
 
-$$
+```math
 \boxed{
 \mathcal L_{\mathrm{NLL}}(\theta)
 =
@@ -509,7 +509,7 @@ x_i^{(n)}
 x_{<i}^{(n)}
 \right)
 }
-$$
+```
 
 这里采用的是 **token-level averaging**：每个有效 target token 权重相同，而不是每个序列权重相同。
 
@@ -530,23 +530,23 @@ $$
 
 首先，将上下文编码为 $d$ 维隐藏状态：
 
-$$
+```math
 h_i
 =
 f_\theta(x_{<i}),
 \qquad
 h_i\in\mathbb R^d.
-$$
+```
 
 > 关于 token ID、embedding 与连续向量表示的关系，见 [Representation](../02_representation/README.md)。
 
 随后通过输出线性层投影到词表空间：
 
-$$
+```math
 z_i
 =
 W_{\mathrm{out}}h_i+b_{\mathrm{out}},
-$$
+```
 
 其中
 
@@ -558,12 +558,12 @@ $$
 
 因此
 
-$$
+```math
 z_i
 =
 (z_{i,1},z_{i,2},\dots,z_{i,K})
 \in\mathbb R^K.
-$$
+```
 
 第 $k$ 个分量 $z_{i,k}$ 称为 **logit**。Logit 是未归一化分数，可以取任意实数：
 
@@ -573,20 +573,20 @@ $$
 
 利用 Softmax 将 logits 映射为概率：
 
-$$
+```math
 p_i
 =
-\operatorname{softmax}(z_i),
-$$
+\mathrm{softmax}(z_i),
+```
 
 其中
 
-$$
+```math
 p_{i,k}
 =
 \frac{\exp(z_{i,k})}
 {\sum_{j=1}^{K}\exp(z_{i,j})}.
-$$
+```
 
 此时
 
@@ -598,14 +598,14 @@ $$
 
 于是
 
-$$
+```math
 \boxed{
 p_\theta(X_i=v_k\mid x_{<i})
 =
 \frac{\exp(z_{i,k})}
 {\sum_{j=1}^{K}\exp(z_{i,j})}
 }
-$$
+```
 
 整个过程可以写成
 
@@ -637,15 +637,15 @@ $$
 
 在实际 decoder-only Transformer 中，更常见的下标约定是：
 
-$$
+```math
 h_i
 =
 f_\theta(x_{\le i}),
-$$
+```
 
 位置 $i$ 的隐藏状态用于预测 $x_{i+1}$：
 
-$$
+```math
 p_\theta
 \left(
 X_{i+1}=v_k
@@ -653,11 +653,11 @@ X_{i+1}=v_k
 x_{\le i}
 \right)
 =
-\operatorname{softmax}
+\mathrm{softmax}
 \left(
 W_{\mathrm{out}}h_i+b_{\mathrm{out}}
 \right)_k.
-$$
+```
 
 这与理论记号
 
@@ -682,15 +682,15 @@ $$
 
 模型预测分布为
 
-$$
+```math
 p_i
 =
 (p_{i,1},p_{i,2},\dots,p_{i,K}),
-$$
+```
 
 其中
 
-$$
+```math
 p_{i,j}
 =
 p_\theta
@@ -699,34 +699,34 @@ X_i=v_j
 \mid
 x_{<i}^{(n)}
 \right).
-$$
+```
 
 该 token 的负对数似然为
 
-$$
+```math
 \ell_i^{(n)}
 =
 -\log p_{i,c}.
-$$
+```
 
 将真实 token 写成 one-hot 目标分布
 
-$$
+```math
 y_i
 =
 (y_{i,1},y_{i,2},\dots,y_{i,K}),
-$$
+```
 
 其中
 
-$$
+```math
 y_{i,j}
 =
 \begin{cases}
 1, & j=c,\\
 0, & j\neq c,
 \end{cases}
-$$
+```
 
 则目标分布与预测分布之间的交叉熵为
 
@@ -744,7 +744,7 @@ $$
 
 因此，在 one-hot hard label 下，
 
-$$
+```math
 \boxed{
 H(y_i,p_i)
 =
@@ -752,21 +752,21 @@ H(y_i,p_i)
 =
 \ell_i^{(n)}
 }
-$$
+```
 
 即单个 token 上
 
-$$
+```math
 \boxed{
 \mathrm{CE}
 =
 \mathrm{NLL}
 }
-$$
+```
 
 对所有有效 target token 求平均：
 
-$$
+```math
 \boxed{
 \mathcal L_{\mathrm{CE}}(\theta)
 =
@@ -783,7 +783,7 @@ x_i^{(n)}
 x_{<i}^{(n)}
 \right)
 }
-$$
+```
 
 从分类角度看，每个位置是一个 $K$ 类分类问题；从概率建模角度看，它对应于最大化真实 token 的条件似然。
 
@@ -791,12 +791,12 @@ $$
 
 将 Softmax 代入，
 
-$$
+```math
 p_{i,c}
 =
 \frac{\exp(z_{i,c})}
 {\sum_{j=1}^{K}\exp(z_{i,j})},
-$$
+```
 
 则单个 token 的损失为
 
@@ -821,22 +821,22 @@ $$
 
 即
 
-$$
+```math
 \boxed{
 \ell_i
 =
 -z_{i,c}
 +
-\operatorname{logsumexp}(z_i)
+\mathrm{logsumexp}(z_i)
 }
-$$
+```
 
 训练的作用并不是单独让 $z_{i,c}$ 变大，而是提高真实 token 的 logit 相对于其他候选 token 的相对优势。
 
 实际实现通常直接从 logits 计算 cross-entropy，而不是显式执行
 
 $$
-\operatorname{Softmax}
+\mathrm{Softmax}
 \rightarrow
 \log,
 $$
@@ -889,13 +889,13 @@ $$
 
 在 one-hot token supervision 下，又有
 
-$$
+```math
 \boxed{
 \text{Token-level NLL}
 =
 \text{Cross-Entropy Loss}
 }
-$$
+```
 
 
 

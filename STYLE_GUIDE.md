@@ -59,10 +59,24 @@
 ## 5. 公式与代码
 
 - 行内公式使用 `$...$`；
-- 独立公式使用 `$$...$$`；
+- 简单的独立公式使用 `$$...$$`；
+- 多行公式中若包含独立成行的 `=` 或 `-`，使用 ```` ```math ```` 围栏，避免被 GFM 识别为 Setext 标题；
+- GitHub 不接受的 `\operatorname{name}` 应改用经过确认的 `\mathrm{name}`，不要对未知命令做批量替换；
 - 多行推导优先使用 `aligned`；
 - 代码标识符使用反引号，例如 `CrossEntropyLoss`；
 - 公式与正文之间保留自然过渡句，避免连续堆叠公式。
+
+提交前运行：
+
+```bash
+python scripts/check_markdown_math.py .
+```
+
+仅在需要应用确定性修复时运行：
+
+```bash
+python scripts/check_markdown_math.py --fix .
+```
 
 ## 6. 推荐文档结构
 
