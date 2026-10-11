@@ -233,7 +233,7 @@ x=v_k,
 
 ```math
 \boxed{
-\operatorname{Emb}(x)
+\mathrm{Emb}(x)
 =
 E_{k,:}
 }.
@@ -273,7 +273,7 @@ E_{k,:}.
 
 ```math
 \boxed{
-\operatorname{Emb}(v_k)
+\mathrm{Emb}(v_k)
 =
 E_{k,:}
 }.
@@ -618,7 +618,7 @@ Euclidean distance 同时受到向量方向和模长的影响。
 
 ```math
 \boxed{
-\operatorname{cos}
+\cos
 (\mathbf u_i,\mathbf u_j)
 =
 \frac{

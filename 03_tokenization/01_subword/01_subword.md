@@ -45,7 +45,7 @@ playing → play + ing
 输入语料 $D$ 和目标词表大小 $K$，得到 tokenizer 参数 $\theta$：
 
 ```math
-\theta=\operatorname{Train}(D,K).
+\theta=\mathrm{Train}(D,K).
 ```
 
 $\theta$ 里可能有：
