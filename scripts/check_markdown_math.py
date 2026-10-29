@@ -11,6 +11,8 @@ limited to deterministic transformations:
   ``\\mathrm{name}``.  Unknown operator names are reported but never changed.
 * Replace raw ``<``/``>`` comparison symbols (including HTML entity forms) with
   ``\\lt``/``\\gt`` so GitHub's HTML layer cannot corrupt the TeX source.
+* Separate inline-math opening dollars from adjacent prose punctuation with
+  an ASCII space so GitHub recognizes the expression.
 """
 
 from __future__ import annotations
@@ -20,6 +22,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import re
 import sys
+import unicodedata
 from typing import Iterable, Sequence
 
 
@@ -144,6 +147,20 @@ def _mask_inline_protected_regions(line: str) -> str:
             continue
         end = closing + len(delimiter)
         _mask_range(characters, index, end)
+        # GitHub's $`...`$ syntax is math, not an ordinary code example.
+        # Keep non-space placeholders next to its dollars so the scanner can
+        # pair them, while dollars inside the code span remain masked.
+        if (
+            delimiter == "`"
+            and index > 0
+            and line[index - 1] == "$"
+            and not _is_escaped(line, index - 1)
+            and (index < 2 or line[index - 2] != "$")
+            and end < len(line)
+            and line[end] == "$"
+            and (end + 1 == len(line) or line[end + 1] != "$")
+        ):
+            characters[index] = characters[end - 1] = "x"
         index = end
 
     for pattern in (INLINE_CODE_HTML_RE, INLINE_COMMENT_RE):
@@ -196,6 +213,22 @@ def _inline_math_spans(line: str) -> tuple[list[tuple[int, int]], int | None]:
             opening = None
 
     return spans, opening
+
+
+def _needs_inline_math_space(line: str, start: int) -> bool:
+    """Recognize punctuation boundaries that GitHub leaves as literal text.
+
+    Limit repairs to prose punctuation. ASCII brackets, emphasis markers and
+    other Markdown syntax need parsing context and must not be blindly spaced.
+    In particular, an ASCII opening parenthesis already works on GitHub.
+    """
+
+    if start == 0:
+        return False
+    previous = line[start - 1]
+    return previous in ",.;:!?" or (
+        not previous.isascii() and unicodedata.category(previous).startswith("P")
+    )
 
 
 def _operator_issues_and_replacement(
@@ -446,6 +479,21 @@ def analyze_document(text: str, path: str = "<text>", apply_fixes: bool = False)
         updated_content = content
         inline_replacements: list[tuple[int, int, str]] = []
         for start, end in spans:
+            code_delimited = content[start + 1] == "`" and content[end - 2] == "`"
+            if not code_delimited and _needs_inline_math_space(content, start):
+                issues.append(
+                    Issue(
+                        path,
+                        line_number,
+                        "MATH008",
+                        "inline math immediately after punctuation may stay literal "
+                        "on GitHub; add a space before the opening $",
+                        fixable=True,
+                    )
+                )
+                if apply_fixes:
+                    inline_replacements.append((start, start, " "))
+                    fix_count += 1
             tex = content[start + 1 : end - 1]
             operator_issues, replacement, count = _operator_issues_and_replacement(
                 tex,

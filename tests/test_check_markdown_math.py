@@ -141,6 +141,92 @@ $p>0$
             {issue.code for issue in structure.issues}, {"MATH005", "MATH006"}
         )
 
+    def test_attention_diag_after_chinese_comma_is_reported_and_fixed(self) -> None:
+        source = (
+            r"其中，$\mathrm{diag}(\mathbf p)$ 的对角线元素为 $p_1,\dots,p_n$，"
+            r"其余元素为 $0$。"
+            "\n"
+        )
+        checked = checker.analyze_document(source, "attention.md")
+        self.assertEqual([issue.code for issue in checked.issues], ["MATH008"])
+        self.assertEqual(checked.issues[0].line, 1)
+        self.assertTrue(checked.issues[0].fixable)
+        self.assertEqual(checked.text, source)
+        self.assertEqual(checked.fix_count, 0)
+
+        fixed = checker.analyze_document(source, "attention.md", apply_fixes=True)
+        self.assertEqual(fixed.text, source.replace("其中，$", "其中， $"))
+        self.assertEqual(fixed.fix_count, 1)
+        again = checker.analyze_document(fixed.text, apply_fixes=True)
+        self.assertEqual(again.issues, [])
+        self.assertEqual(again.fix_count, 0)
+        self.assertEqual(again.text, fixed.text)
+
+    def test_inline_math_after_prose_punctuation_gets_an_ascii_space(self) -> None:
+        for punctuation in "，。；：！？、（）【】《》“”‘’…—,.;:!?":
+            with self.subTest(punctuation=punctuation):
+                source = f"正文{punctuation}$x$。\n"
+                fixed = checker.analyze_document(source, apply_fixes=True)
+                self.assertEqual([issue.code for issue in fixed.issues], ["MATH008"])
+                self.assertEqual(fixed.text, f"正文{punctuation} $x$。\n")
+                self.assertEqual(fixed.fix_count, 1)
+
+    def test_boundary_and_tex_fixes_on_the_same_line_keep_offsets(self) -> None:
+        source = r"其中，$\operatorname{softmax}(x)$、$p>0$；$z$。" + "\n"
+        fixed = checker.analyze_document(source, apply_fixes=True)
+        self.assertEqual(
+            fixed.text, r"其中， $\mathrm{softmax}(x)$、 $p\gt 0$； $z$。" + "\n"
+        )
+        self.assertEqual(fixed.fix_count, 5)
+        self.assertEqual(checker.analyze_document(fixed.text).issues, [])
+
+    def test_boundary_fix_ignores_code_html_display_math_and_currency(self) -> None:
+        source = r"""Keep `其中，$x$` and <code>其中，$x$</code> literal.
+<!-- 其中，$x$ -->
+<!--
+其中，$x$
+-->
+<pre>
+其中，$x$
+</pre>
+```text
+其中，$x$
+```
+```math
+\text{其中，$x$}
+```
+价格：$20，转义：\$x\$。
+"""
+        fixed = checker.analyze_document(source, apply_fixes=True)
+        self.assertEqual(fixed.issues, [])
+        self.assertEqual(fixed.text, source)
+        self.assertEqual(fixed.fix_count, 0)
+
+    def test_supported_inline_boundaries_and_entities_are_preserved(self) -> None:
+        source = r"""$x$，其中 $y$，其中， $z$，以及 ($w$)。
+**$x$** and [$y$](example.md) and 其中，$`\mathrm{diag}(\mathbf p)`$。
+$\mathrm{diag}(\mathbf p)$&#x20;
+其中，$\mathrm{diag}(\mathbf p)$&#x20;
+"""
+        fixed = checker.analyze_document(source, apply_fixes=True)
+        self.assertEqual([issue.code for issue in fixed.issues], ["MATH008"])
+        self.assertEqual(fixed.text, source.replace("其中，$\\mathrm", "其中， $\\mathrm"))
+        self.assertEqual(fixed.text.count("&#x20;"), 2)
+
+    def test_boundary_file_fix_preserves_crlf_and_missing_final_newline(self) -> None:
+        source = "# CRLF\r\n\r\n其中，$x$、$y$。"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "sample.md"
+            path.write_bytes(source.encode("utf-8"))
+            issues, changed, fix_count = checker.process_file(path, fix=True)
+            self.assertEqual(issues, [])
+            self.assertTrue(changed)
+            self.assertEqual(fix_count, 2)
+            self.assertEqual(
+                path.read_bytes(), "# CRLF\r\n\r\n其中， $x$、 $y$。".encode("utf-8")
+            )
+            self.assertEqual(checker.process_file(path, fix=True), ([], False, 0))
+
     def test_file_fix_preserves_crlf_and_is_idempotent(self) -> None:
         source = (
             "# CRLF\r\n\r\n$$\r\nx\r\n=\r\n"

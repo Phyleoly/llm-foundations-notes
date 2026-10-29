@@ -98,7 +98,7 @@ e_i^{(k)}
 \end{cases}
 ```
 
-因此，$\mathbf e_k$ 只有第 $k$ 个分量为 $1$，其余分量均为 $0$。
+因此， $\mathbf e_k$ 只有第 $k$ 个分量为 $1$，其余分量均为 $0$。
 
 对于任意两个 token $v_m$ 和 $v_n$，有
 
@@ -422,7 +422,7 @@ d_e
 d_{\mathrm{model}}.
 ```
 
-其中，$d_e$ 表示 embedding lookup 输出向量的宽度，而 $d_{\mathrm{model}}$ 通常表示 Transformer residual stream 或 hidden states 的宽度。
+其中， $d_e$ 表示 embedding lookup 输出向量的宽度，而 $d_{\mathrm{model}}$ 通常表示 Transformer residual stream 或 hidden states 的宽度。
 
 很多 Transformer 模型直接令
 

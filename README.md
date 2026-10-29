@@ -94,10 +94,10 @@ NN_topic_name.md
 python scripts/check_markdown_math.py .
 ```
 
-使用 `--fix` 可以修复确定性的公式围栏和已列入白名单的宏兼容问题。其他问题只报告，不会自动改写：
+使用 `--fix` 可以修复确定性的公式围栏、已列入白名单的宏、比较符号，以及行内公式紧接正文标点导致的识别问题（在起始 `$` 前补空格）。其他问题只报告，不会自动改写：
 
 ```bash
 python scripts/check_markdown_math.py --fix .
 ```
 
-该检查也会由 GitHub Actions 在 push 和 pull request 时自动运行。
+该检查也会由 GitHub Actions 在 push 和 pull request 时自动运行。它是静态兼容性检查，不能替代 GitHub 页面上的实际渲染验证。

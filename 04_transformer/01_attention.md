@@ -43,7 +43,7 @@ Attention 把等权平均改成了**由当前查询决定的加权平均**。记
 
 每个 $\mathbf k_j$ 都与一个 $\mathbf v_j$ 配对。Query 与各个 Key 先算出一组匹配分数，再经过 Softmax 得到权重。**第 $j$ 个分数归一化后得到的 $\alpha_j$，就是乘在第 $j$ 个 Value 上的系数。** Query 和 Key 决定权重，Value 提供被汇总的内容。
 
-例如，取两个示意用的 Value：$\mathbf v_1=(10,0)$、$\mathbf v_2=(0,5)$。下面人为设定两组 attention 权重，与普通平均对照：
+例如，取两个示意用的 Value： $\mathbf v_1=(10,0)$、 $\mathbf v_2=(0,5)$。下面人为设定两组 attention 权重，与普通平均对照：
 
 | 汇总方式 | $\mathbf v_1$ 的系数 | $\mathbf v_2$ 的系数 | 输出向量 |
 | --- | ---: | ---: | --- |
@@ -59,7 +59,7 @@ Attention 把等权平均改成了**由当前查询决定的加权平均**。记
 
 在模型中，**Query、Key、Value 通常由当前 attention 层的输入表示经过不同的可学习投影得到。**
 
-按行向量约定，设 $\mathbf x$ 是产生当前查询的输入表示，$\mathbf y_j$ 是第 $j$ 条候选信息的输入表示，则
+按行向量约定，设 $\mathbf x$ 是产生当前查询的输入表示， $\mathbf y_j$ 是第 $j$ 条候选信息的输入表示，则
 
 ```math
 \mathbf q=\mathbf xW_Q,
@@ -69,7 +69,7 @@ Attention 把等权平均改成了**由当前查询决定的加权平均**。记
 \mathbf v_j=\mathbf y_jW_V.
 ```
 
-其中，$W_Q$、$W_K$、$W_V$ 是训练时学习的参数矩阵；$\mathbf q$、$\mathbf k_j$、$\mathbf v_j$ 则是每次前向计算根据当前输入得到的向量。输入表示既可以来自 embedding，也可以来自前面网络层的输出。将多条 Query、Key、Value 分别按行排列，就得到矩阵 $Q$、$K$、$V$。
+其中， $W_Q$、 $W_K$、 $W_V$ 是训练时学习的参数矩阵； $\mathbf q$、 $\mathbf k_j$、 $\mathbf v_j$ 则是每次前向计算根据当前输入得到的向量。输入表示既可以来自 embedding，也可以来自前面网络层的输出。将多条 Query、Key、Value 分别按行排列，就得到矩阵 $Q$、 $K$、 $V$。
 
 同一条候选信息分别生成 Key 和 Value，使模型可以用一组特征判断“是否匹配当前查询”，再用另一组特征提供“应该传递的内容”。两组特征由训练共同学习，其各个分量通常没有预先指定的语义。
 
@@ -77,7 +77,7 @@ Attention 把等权平均改成了**由当前查询决定的加权平均**。记
 
 ## 3. Scaled Dot-Product Attention
 
-Scaled Dot-Product Attention 用 Query 与 Key 的点积计算匹配分数，再除以 $\sqrt{d_k}$，经过 Softmax 得到 Value 的权重。其中，$d_k$ 是 Query 和 Key 的特征维度。下面讨论单头注意力的基本计算，以及缩放与分数尺度、Softmax 梯度的关系。
+Scaled Dot-Product Attention 用 Query 与 Key 的点积计算匹配分数，再除以 $\sqrt{d_k}$，经过 Softmax 得到 Value 的权重。其中， $d_k$ 是 Query 和 Key 的特征维度。下面讨论单头注意力的基本计算，以及缩放与分数尺度、Softmax 梯度的关系。
 
 ### 3.1 放大 logits 对 Softmax 的影响
 
@@ -145,7 +145,7 @@ z_m\gt z_j,
 \end{aligned}
 ```
 
-为分析点积的尺度，沿用[Attention Is All You Need §3.2.1 脚注 1](https://arxiv.org/html/1706.03762v7#S3.SS2.SSS1)中的简化假设：$q_1,\dots,q_{d_k},k_1,\dots,k_{d_k}$ 这 $2d_k$ 个随机变量相互独立，并且：
+为分析点积的尺度，沿用[Attention Is All You Need §3.2.1 脚注 1](https://arxiv.org/html/1706.03762v7#S3.SS2.SSS1)中的简化假设： $q_1,\dots,q_{d_k},k_1,\dots,k_{d_k}$ 这 $2d_k$ 个随机变量相互独立，并且：
 
 ```math
 \begin{aligned}
@@ -215,7 +215,7 @@ z_m\gt z_j,
 
 因此，**除以 $\sqrt{d_k}$ 可以使点积的方差保持为 $1$，不再随维度变化。** 而除以 $d_k$ 后，方差会随维度增大而趋于 $0$，点积的波动幅度也会不断缩小。
 
-3.1 表明，Softmax 取决于分数之间的差值。把同样的假设扩展到一个 Query $\mathbf q$ 和两个 Key $\mathbf k_a,\mathbf k_b$：三者的所有分量相互独立，均值为 $0$、方差为 $1$。此时，$k_{a,i}-k_{b,i}$ 的均值为 $0$、方差为 $2$，且与 $q_i$ 独立，因此
+3.1 表明，Softmax 取决于分数之间的差值。把同样的假设扩展到一个 Query $\mathbf q$ 和两个 Key $\mathbf k_a,\mathbf k_b$：三者的所有分量相互独立，均值为 $0$、方差为 $1$。此时， $k_{a,i}-k_{b,i}$ 的均值为 $0$、方差为 $2$，且与 $q_i$ 独立，因此
 
 ```math
 \begin{aligned}
@@ -272,7 +272,7 @@ J=\left[\frac{\partial p_i}{\partial z_j}\right]_{i,j=1}^{n}
 =\mathrm{diag}(\mathbf p)-\mathbf p\mathbf p^{\mathsf T}.
 ```
 
-其中，$\mathrm{diag}(\mathbf p)$ 的对角线元素为 $p_1,\dots,p_n$，其余元素为 $0$。
+其中， $\mathrm{diag}(\mathbf p)$ 的对角线元素为 $p_1,\dots,p_n$，其余元素为 $0$。
 
 当某个 $p_m\to 1$、其余概率趋于 $0$ 时，所有对角项和非对角项都趋于 $0$：
 
@@ -300,7 +300,7 @@ p_i(1-p_i)&\to 0,\\
 =J^{\mathsf T}\nabla_{\mathbf p}\mathcal L.
 ```
 
-其中，$\nabla_{\mathbf p}\mathcal L$ 是后续计算传回给概率向量的上游梯度。**若上游梯度保持有界**，就可以由 $J\to\mathbf 0$ 推出沿这条路径传回 logits 的梯度也趋于 $0$。在 attention 中，这意味着经由 Softmax 传回匹配分数的学习信号会变弱。
+其中， $\nabla_{\mathbf p}\mathcal L$ 是后续计算传回给概率向量的上游梯度。**若上游梯度保持有界**，就可以由 $J\to\mathbf 0$ 推出沿这条路径传回 logits 的梯度也趋于 $0$。在 attention 中，这意味着经由 Softmax 传回匹配分数的学习信号会变弱。
 
 最终损失的形式会影响这一结论的适用性。例如，若直接对 Softmax 概率使用交叉熵 $\mathcal L=-\log p_c$，其中 $c$ 是目标类别，则
 
@@ -313,7 +313,7 @@ p_i, & i\neq c.
 \end{cases}
 ```
 
-当模型几乎把全部概率分给错误类别时，$p_c\to 0$，上游梯度 $-1/p_c$ 无界，而目标类别的 logit 梯度趋于 $-1$。因此，**Softmax 的局部导数趋于零，并不保证最终损失对 logits 的梯度也趋于零。** 交叉熵的定义见[负对数似然与交叉熵](../01_probability/01_token_probability_model.md#10-负对数似然与交叉熵)。
+当模型几乎把全部概率分给错误类别时， $p_c\to 0$，上游梯度 $-1/p_c$ 无界，而目标类别的 logit 梯度趋于 $-1$。因此，**Softmax 的局部导数趋于零，并不保证最终损失对 logits 的梯度也趋于零。** 交叉熵的定义见[负对数似然与交叉熵](../01_probability/01_token_probability_model.md#10-负对数似然与交叉熵)。
 
 ### 3.4 完整的 Attention 计算
 
@@ -360,7 +360,7 @@ Z=\frac{QK^{\mathsf T}}{\sqrt{d_k}},
 Z\in\mathbb R^{m\times n}.
 ```
 
-其中，$Z_{ij}$ 表示第 $i$ 个 Query 与第 $j$ 个 Key 的缩放点积分数。每一行对应一个 Query，每一列对应一组 Key/Value。
+其中， $Z_{ij}$ 表示第 $i$ 个 Query 与第 $j$ 个 Key 的缩放点积分数。每一行对应一个 Query，每一列对应一组 Key/Value。
 
 **对 $Z$ 的每一行分别做 Softmax**，得到权重矩阵 $A$：
 

@@ -9,8 +9,8 @@ Tokenizer 要决定两件事：
 
 一般来说：
 
-- token 越大，$K$ 越大，$T$ 越小；
-- token 越小，$K$ 越小，$T$ 越大。
+- token 越大， $K$ 越大， $T$ 越小；
+- token 越小， $K$ 越小， $T$ 越大。
 
 Subword 就是在两边之间取折中。
 
