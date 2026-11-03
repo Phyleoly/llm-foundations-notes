@@ -1,5 +1,9 @@
 # 5. SentencePiece
 
+> 状态：草稿
+
+本篇要回答：SentencePiece 如何组织 tokenizer 的训练与使用，它与具体子词算法是什么关系？
+
 > SentencePiece 更像 tokenizer 工具和训练框架，不是与 BPE、WordPiece、Unigram 同层级的第四种算法。
 
 它常用的底层模型包括：

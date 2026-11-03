@@ -1,0 +1,48 @@
+{
+  "scope": "operator_smoke_only",
+  "description": "LayerNorm + MHA; no positional encoding, training, or paper result",
+  "config": {
+    "device": "cpu",
+    "dtype": "float32",
+    "seed": 11,
+    "batch_size": 2,
+    "sequence_length": 16,
+    "hidden_dim": 32,
+    "num_heads": 4,
+    "layer_norm_eps": 1e-05,
+    "dropout": 0.0,
+    "perturbation_start": 8
+  },
+  "environment": {
+    "python": "3.11.14",
+    "torch": "2.9.1+cu126",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "cuda_runtime": "12.6"
+  },
+  "input": {
+    "distribution": "standard_normal",
+    "shape": [
+      2,
+      16,
+      32
+    ]
+  },
+  "source_sha256": {
+    "smoke.py": "bc8e6f451ac6c991bae60a10f8326eb3c44a2e2ab75b43601578773c43f926db",
+    "chi_2023_variance/src/model.py": "6c724c7ae1a8980100105e89358be2395ebc432c4d3f6bfa4c17975fd71af852"
+  },
+  "checks": {
+    "output_shape_matches_input": true,
+    "output_finite": true,
+    "input_gradient_finite": true,
+    "parameter_gradients_finite": true,
+    "causal_prefix_unchanged": true,
+    "unmasked_control_changed": true
+  },
+  "metrics": {
+    "causal_prefix_max_abs_diff": 1.1920928955078125e-07,
+    "unmasked_prefix_max_abs_diff": 0.3146572411060333,
+    "causal_comparison_atol": 1e-06,
+    "causal_comparison_rtol": 1e-05
+  }
+}

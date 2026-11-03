@@ -1,15 +1,5 @@
 # Assets
 
-本目录用于存放笔记中的图片、示意图和其他静态资源。
+本目录保存主知识笔记使用的图片、示意图和静态资源，按章节或主题放置，例如 `assets/04_transformer/`。
 
-建议按章节建立子目录，例如：
-
-```text
-assets/
-├── 01_probability/
-├── 02_representation/
-├── 03_tokenization/
-└── 04_transformer/
-```
-
-Markdown 中使用相对路径引用资源。
+资源的含义和来源由引用它的正文说明。图示的保存、引用与来源要求统一见 [写作与组织规范](../STYLE_GUIDE.md)；专题运行产物由对应 [专题项目](../projects/README.md) 管理。

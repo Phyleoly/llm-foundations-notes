@@ -1,5 +1,9 @@
 # 6. 放到一起看
 
+> 状态：草稿
+
+本篇要回答：BPE、WordPiece、Unigram 与 SentencePiece 应在哪些维度上比较？
+
 ## 核心区别
 
 | 维度 | BPE | WordPiece | Unigram | SentencePiece |

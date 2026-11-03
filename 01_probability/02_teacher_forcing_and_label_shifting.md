@@ -1,6 +1,10 @@
 # Teacher Forcing 与标签移位
 
+> 状态：草稿
+
 > 前置内容：[Token 到概率模型：参数化语言模型](./01_token_probability_model.md#6-参数化语言模型)
+
+本篇要回答：训练时如何并行预测下一个 token，并正确对齐输入与标签？
 
 ## 1. Teacher Forcing
 

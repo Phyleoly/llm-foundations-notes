@@ -1,16 +1,12 @@
 # LLM Foundations Notes
 
-一套围绕大语言模型基础原理整理的学习笔记。
+一套面向已有深度学习基础的 LLM 系统笔记。项目以个人学习与实验积累为主，持续公开推导、疑问与核对过程。
 
 ## 目录
 
 ### 01. [语言模型的概率建模](./01_probability/README.md)
 
 从 token 序列上的概率分布出发，推导自回归分解、最大似然、NLL 与 Cross-Entropy，并说明 Teacher Forcing、Label Shifting 与数值稳定计算。
-
-- [Token 到概率模型](./01_probability/01_token_probability_model.md)
-- [Teacher Forcing 与标签移位](./01_probability/02_teacher_forcing_and_label_shifting.md)
-- [LogSoftmax 与数值稳定性](./01_probability/03_logsoftmax_numerical_stability.md)
 
 ### 02. [Representation](./02_representation/README.md)
 
@@ -66,38 +62,68 @@ Raw Text
                               Evaluation
 ```
 
-> 目录编号表示主要阅读顺序，不表示严格的理论依赖。例如第一章会先把 tokenizer 视为给定映射，具体的 BPE 等算法在第三章再展开。
+> 现有目录编号保留为稳定路径，不表示严格的理论依赖。阅读顺序以各章的精选路线为准。例如第一章会先把 tokenizer 视为给定映射，具体的 BPE 等算法在第三章再展开。
 
-## 文件命名
+## 阅读与积累
 
-统一使用：
+各章 README 提供人工精选路线和从文章生成的完整索引。基础概念在正文中展开，论文阅读与实验通过 [主题项目入口](./projects/README.md) 连接；当前项目入口与历史结果记录各有用途，引用结果时应保留对应版本。
+
+[近期计划](./ROADMAP.md) 只记录下一步工作。写作、目录组织、模板选择与归档规则统一放在 [STYLE_GUIDE.md](./STYLE_GUIDE.md)；新增文档从 [模板目录](./templates/README.md) 开始，图片等静态资源见 [assets](./assets/README.md)。
+
+项目许可尚待选择；当前不声明统一的内容或代码许可。
+
+## 仓库布局
 
 ```text
-NN_topic_name.md
+llm-foundations-notes/
+├── 01_probability/              概率建模
+├── 02_representation/           连续表示与位置机制
+├── 03_tokenization/             文本切分与词表
+├── 04_transformer/              网络组件与完整前向
+├── 05_training/                 训练目标的实际优化
+├── 06_inference/                生成与推理计算
+├── 07_evaluation/               评估协议与结论边界
+├── projects/                    专题项目入口
+│   └── nope/                    NoPE 本地试点，尚非 submodule
+├── templates/                   五类写作起点，README 说明用法
+│   ├── note.md                  概念笔记
+│   ├── paper_reading.md         论文阅读
+│   ├── chapter_readme.md        章节导读
+│   ├── topic_readme.md          专题入口
+│   └── experiment_record.md     实验记录
+├── assets/                      主笔记使用的图示与资源
+├── scripts/                     创建、索引与检查工具
+├── tests/                       文档工具的测试
+├── reproductions/NoPE/README.md  旧地址的迁移入口
+├── ROADMAP.md                   近期计划
+└── STYLE_GUIDE.md               写作与维护规则
 ```
-
-约定：
-
-- 文件名使用小写英文和 `snake_case`；
-- 章节目录使用两位数字前缀；
-- 文档 H1 可以使用中文；
-- 文件间引用统一使用相对路径；
-- 图片等静态资源统一放入 [`assets/`](./assets/README.md)。
-
-详细写作约定见 [STYLE_GUIDE.md](./STYLE_GUIDE.md)。
 
 ## 文档检查
 
-检查全部 Markdown 数学公式的 GFM 兼容性：
+文档工具使用 Python 3.11 或更新版本，依赖与专题研究环境分开。建议先创建虚拟环境：
 
 ```bash
-python scripts/check_markdown_math.py .
+python -m venv .venv
 ```
 
-使用 `--fix` 可以修复确定性的公式围栏、已列入白名单的宏、比较符号，以及行内公式紧接正文标点导致的识别问题（在起始 `$` 前补空格）。其他问题只报告，不会自动改写：
+Windows PowerShell 使用 `.venv\Scripts\Activate.ps1` 激活；Linux/macOS 使用 `source .venv/bin/activate`。随后安装文档工具依赖并检查主仓内容：
 
 ```bash
-python scripts/check_markdown_math.py --fix .
+python -m pip install -r requirements-docs.txt
+python scripts/notes.py check
 ```
 
-该检查也会由 GitHub Actions 在 push 和 pull request 时自动运行。它是静态兼容性检查，不能替代 GitHub 页面上的实际渲染验证。
+新增笔记与刷新章节索引：
+
+```bash
+python scripts/notes.py new 04_transformer/attention_example.md --title "Attention 的最小例子"
+python scripts/notes.py index
+python scripts/notes.py index --check
+```
+
+论文阅读、章节导读、专题入口和实验记录的起点见 [模板目录](./templates/README.md)。工具检查内部文件、图片、可解析锚点、文章元信息与索引一致性；它不判断理论或实验结论是否正确。
+
+完整写作流程、检查边界，以及原数学检查器和显式 `--fix` 用法，统一见 [新增与维护流程](./STYLE_GUIDE.md#7-新增与维护流程)。
+
+文档检查也会由 GitHub Actions 在 push 和 pull request 时运行。静态检查不能替代 GitHub 页面上的实际渲染验证。

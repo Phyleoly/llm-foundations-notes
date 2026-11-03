@@ -1,6 +1,10 @@
 # Attention 的基本计算
 
+> 状态：草稿
+
 > 前置内容：[离散 Token 表示与 Token Embedding](../02_representation/01_token_embedding.md)、[LogSoftmax 与数值稳定性](../01_probability/03_logsoftmax_numerical_stability.md)。
+
+本篇要回答：Query、Key 与 Value 如何产生加权表示，为什么需要缩放点积？
 
 ## 1. Attention 机制
 

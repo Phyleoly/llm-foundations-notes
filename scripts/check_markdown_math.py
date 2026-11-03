@@ -25,6 +25,8 @@ import sys
 import unicodedata
 from typing import Iterable, Sequence
 
+from note_tools.scope import RepositoryScope, repository_root
+
 
 FENCE_OPEN_RE = re.compile(r"^( {0,3})(`{3,}|~{3,})(.*)$")
 DISPLAY_DELIMITER_RE = re.compile(r"^(?P<indent> {0,3})\$\$[ \t]*$")
@@ -51,11 +53,6 @@ SAFE_OPERATOR_NAMES = frozenset(
         "softmax",
     }
 )
-
-EXCLUDED_DIRECTORIES = frozenset(
-    {".git", ".mypy_cache", ".pytest_cache", ".venv", "node_modules", "vendor"}
-)
-
 
 @dataclass(frozen=True)
 class Issue:
@@ -543,28 +540,14 @@ def analyze_document(text: str, path: str = "<text>", apply_fixes: bool = False)
     return Analysis(issues, "".join(lines), fix_count)
 
 
-def _is_excluded(path: Path) -> bool:
-    return any(part in EXCLUDED_DIRECTORIES for part in path.parts)
-
-
 def find_markdown_files(inputs: Iterable[str]) -> list[Path]:
     files: set[Path] = set()
     for value in inputs:
         path = Path(value)
-        if path.is_file():
-            if path.suffix.lower() == ".md" and not _is_excluded(path):
-                files.add(path)
-            continue
-        if path.is_dir():
-            for candidate in path.rglob("*.md"):
-                if (
-                    candidate.is_file()
-                    and not candidate.is_symlink()
-                    and not _is_excluded(candidate)
-                ):
-                    files.add(candidate)
-            continue
-        raise FileNotFoundError(value)
+        if not path.exists():
+            raise FileNotFoundError(value)
+        scope = RepositoryScope(repository_root(path))
+        files.update(scope.markdown_files(path))
     return sorted(files, key=lambda item: item.as_posix())
 
 
@@ -619,8 +602,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = build_argument_parser().parse_args(argv)
     try:
         files = find_markdown_files(args.paths)
-    except FileNotFoundError as error:
-        print(f"error: path does not exist: {error}", file=sys.stderr)
+    except (OSError, ValueError) as error:
+        print(f"error: {error}", file=sys.stderr)
         return 2
 
     if not files:

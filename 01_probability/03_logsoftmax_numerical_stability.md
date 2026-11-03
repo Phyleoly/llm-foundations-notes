@@ -1,6 +1,10 @@
 # LogSoftmax 与数值稳定性
 
+> 状态：草稿
+
 > 前置内容：[Token 到概率模型：负对数似然与交叉熵](./01_token_probability_model.md#10-负对数似然与交叉熵)
+
+本篇要回答：如何直接从 logits 稳定地计算 token 的对数概率与损失？
 
 前文已经得到单个 token 的负对数似然
 

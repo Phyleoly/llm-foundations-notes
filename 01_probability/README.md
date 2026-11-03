@@ -2,7 +2,7 @@
 
 本章从 token 序列上的概率分布出发，建立自回归语言模型的训练目标，并进一步说明该目标在训练数据组织和数值计算中的实现方式。
 
-## 目录
+## 精选阅读路线
 
 1. [Token 到概率模型](./01_token_probability_model.md)
    - 文本空间与 token 序列
@@ -58,3 +58,17 @@ Label Shifting    LogSumExp
 本章中的 hidden state 被视为模型根据上下文计算得到的连续表示。离散 token ID 如何映射到连续向量将在 [Representation](../02_representation/README.md) 中讨论。
 
 hidden state 如何进一步由 Transformer 计算得到，则在 [Transformer](../04_transformer/README.md) 中展开。
+
+## 全部笔记
+
+以下索引由文章标题与状态生成，阅读顺序以上方路线为准。
+
+<!-- notes:index:start -->
+| 笔记 | 状态 |
+| --- | --- |
+| [Token 到概率模型](./01_token_probability_model.md) | 草稿 |
+| [Teacher Forcing 与标签移位](./02_teacher_forcing_and_label_shifting.md) | 草稿 |
+| [LogSoftmax 与数值稳定性](./03_logsoftmax_numerical_stability.md) | 草稿 |
+| [熵、交叉熵与 KL 散度](./04_entropy_cross_entropy_and_kl.md) | 提纲 |
+
+<!-- notes:index:end -->

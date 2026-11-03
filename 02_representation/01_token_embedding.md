@@ -1,6 +1,10 @@
 # 离散 Token 表示与 Token Embedding
 
-> 前置内容：tokenizer 如何将文本转换为 token 序列见 [Tokenization](../03_tokenization/README.md)。
+> 状态：草稿
+
+> 前置内容：[文本空间与 Token 序列](../01_probability/01_token_probability_model.md#1-文本空间与-token-序列) 的基本约定。具体 tokenizer 算法属于相关阅读，见 [Tokenization](../03_tokenization/README.md)。
+
+本篇要回答：离散 token ID 如何变成连续向量，embedding 的形状与语义边界是什么？
 
 语言模型首先将文本离散化为 token，并进一步将每个 token 转换为整数 token ID。然而，token ID 本身只是离散类别的索引，不能直接表达 token 之间的关系。
 
