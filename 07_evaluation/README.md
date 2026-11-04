@@ -14,6 +14,8 @@
 
 Perplexity 与 token-level NLL 直接相关，因此建议先阅读 [Token 到概率模型](../01_probability/01_token_probability_model.md)。具体评估还依赖上下文、tokenizer 和数据划分，不能脱离协议解释数值。
 
+模型表现与解释质量是不同的评估对象。输入归因、探针或回路解释的忠实性与完整性见 [解释的评估](../08_interpretability/evaluation_and_faithfulness.md)。
+
 ## 全部笔记
 
 以下索引由文章标题与状态生成，阅读顺序以上方路线为准。

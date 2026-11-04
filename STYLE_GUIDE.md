@@ -21,6 +21,7 @@
 - 优化与训练工程：`05_training/`
 - decoding 与 KV cache：`06_inference/`
 - perplexity 与 benchmark：`07_evaluation/`
+- 表示分析、计算机制与解释的验证：`08_interpretability/`
 
 其他章节使用同一概念时，保留必要定义与链接。概览和深入推导可以分别成篇，但需指明详解的唯一位置。
 

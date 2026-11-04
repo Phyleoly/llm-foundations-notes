@@ -24,9 +24,17 @@
 
 完成标准：关键设置能够追溯到原文，偏离原文的部分单独说明；按 [专题记录模板](./projects/nope/EXPERIMENT_RECORD.md) 确定配置、随机种子、预算、运行命令和产物格式。协议明确后开展小规模机制验证，保存多个种子的结果及图表生成命令，并写清结论边界。
 
+### 4. 完成首次可解释性练习
+
+沿 [可解释性导读](./08_interpretability/README.md) 学习问题与证据、残差流和 activation patching。先用单个 next-token 行为练习定义指标和对照，再选择一个小型预训练模型，按 [最小实验协议](./08_interpretability/activation_patching.md#6-第一份实验协议) 开展局部干预。概念阅读可与前向主线并行，实验前需能准确定位 activation。
+
+完成标准：能够区分观察、探针与干预的结论；核对 token 对齐和替换位置，完成自替换检查，保存 clean、corrupted 和 patched 的原始分数，并用留出输入检查效应。报告实验版本、对照、失败样本和未支持的机制结论。当前实验尚未执行。
+
 ## 后续顺序
 
 前向主线完成后，再用同一组配置连接 [小数据训练](./05_training/08_training_loop_and_checkpoints.md)、[无 cache 的自回归生成](./06_inference/01_autoregressive_generation.md) 与 [Perplexity 评估](./07_evaluation/01_perplexity.md)。重点核对 loss 聚合、有效 token 计数和逐步生成过程，并保留可恢复的最小训练记录。
+
+可解释性完成第一个局部干预后，再按 [论文阅读路线](./08_interpretability/reading_list.md) 进入回路、superposition 与 SAE。NoPE 的位置探针可作为表示分析练习，探针成功与模型实际使用位置信息需分开验证。
 
 NoPE 继续作为本地试点维护；需要独立发布且远端地址确定后，再在同一 `projects/nope/` 路径接入 submodule。正式公开前的干净检出验证、代表性实验核对和许可证决策，按 [专题与公开规则](./STYLE_GUIDE.md#8-主题项目与历史实验) 完成。
 

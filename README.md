@@ -32,6 +32,10 @@
 
 讨论 perplexity、任务评估与模型评测方法。
 
+### 08. [Interpretability](./08_interpretability/README.md)
+
+讨论如何解释模型的表示与计算：从输入归因、表示探针和残差流，进入 activation patching、计算回路、稀疏特征及解释的验证。
+
 ## 知识主线
 
 ```text
@@ -64,6 +68,8 @@ Raw Text
 
 > 现有目录编号保留为稳定路径，不表示严格的理论依赖。阅读顺序以各章的精选路线为准。例如第一章会先把 tokenizer 视为给定映射，具体的 BPE 等算法在第三章再展开。
 
+可解释性是一条与基础主线并行的学习路线：理解 hidden states、logits 和 Transformer block 后，即可进入 [第八章](./08_interpretability/README.md)，按“明确行为 → 观察表示 → 提出假说 → 干预验证”学习。训练完整模型不是开始学习的前提；[NoPE 的位置问题](./02_representation/03_nope_reading_list.md) 可以用来练习区分信息可解码性与实际使用。
+
 ## 阅读与积累
 
 各章 README 提供人工精选路线和从文章生成的完整索引。基础概念在正文中展开，论文阅读与实验通过 [主题项目入口](./projects/README.md) 连接；当前项目入口与历史结果记录各有用途，引用结果时应保留对应版本。
@@ -83,6 +89,7 @@ llm-foundations-notes/
 ├── 05_training/                 训练目标的实际优化
 ├── 06_inference/                生成与推理计算
 ├── 07_evaluation/               评估协议与结论边界
+├── 08_interpretability/         表示、计算机制与解释证据
 ├── projects/                    专题项目入口
 │   └── nope/                    NoPE 本地试点，尚非 submodule
 ├── templates/                   五类写作起点，README 说明用法

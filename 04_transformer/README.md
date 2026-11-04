@@ -16,6 +16,7 @@
 - 输入向量见 [Representation](../02_representation/README.md)。
 - causal mask 与 Teacher Forcing 的训练语义见 [Teacher Forcing 与标签移位](../01_probability/02_teacher_forcing_and_label_shifting.md)。
 - logits 到概率与损失见 [Probability](../01_probability/README.md)。
+- 对内部表示与组件作用的观察和干预见 [Interpretability](../08_interpretability/README.md)。
 
 ## 全部笔记
 
