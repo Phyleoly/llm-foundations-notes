@@ -2,7 +2,7 @@
 
 > 状态：提纲
 
-> 前置内容：[残差流与输出贡献](./residual_stream_and_logit_lens.md)、[Activation Patching](./activation_patching.md)。
+> 前置内容：[残差流](./residual_stream.md)、[Activation Patching](./activation_patching.md)。
 
 本篇要回答：如何把若干有作用的组件连接成一个可检验的计算机制？
 

@@ -2,7 +2,7 @@
 
 > 状态：提纲
 
-> 前置内容：[Activation Patching](./activation_patching.md)、[残差流](./residual_stream_and_logit_lens.md)；使用 SAE 特征时再读 [Superposition 与 SAE](./superposition_and_sae.md)。
+> 前置内容：[Activation Patching](./activation_patching.md)、[残差流](./residual_stream.md)；使用 SAE 特征时再读 [Superposition 与 SAE](./superposition_and_sae.md)。
 
 本篇要回答：改变内部表示或参数后能控制模型行为，能够为原有机制提供什么证据？
 
@@ -17,6 +17,8 @@
 上述区分描述操作方式，不预先保证可解释性或编辑质量。
 
 ## 2. Steering 的实验变量
+
+Turner 等的 ActAdd 从一对对比提示在指定层的激活差构造引导方向 $v$。在目标输入的选定位置，将残差状态从 $r$ 改为 $r+\alpha v$，再运行后续网络。初稿在 GPT-2 上研究了主题和情感等生成属性随干预的变化。引导方向、施加位置和强度 $\alpha$ 共同决定观测到的效果。[Turner 等，2023，Methods](https://arxiv.org/pdf/2308.10248v1)
 
 - 定义方向来自对比样本、探针、SAE 还是其他估计方法；构造方向的数据与评估数据分开。
 - 写清干预层、token 位置、强度、是否每个生成步重复施加，以及方向的归一化方式。

@@ -2,7 +2,7 @@
 
 > 状态：草稿
 
-> 前置内容：[可解释性的问题与证据](./overview.md)、[残差流与观察位置](./residual_stream_and_logit_lens.md)、[Token 到概率模型](../01_probability/01_token_probability_model.md)。
+> 前置内容：[可解释性的问题与证据](./overview.md)、[残差流](./residual_stream.md)、[Token 到概率模型](../01_probability/01_token_probability_model.md)。
 
 本篇要回答：把一次前向中的内部激活替换到另一次前向里，能够检验什么，又不能直接证明什么？
 
@@ -73,6 +73,8 @@ h_{\ell,p}(x_r)\leftarrow h_{\ell,p}(x_c).
 
 ## 5. 从恢复实验走向机制检验
 
+替换某个位置的完整残差向量，会同时带入该位置上游多个组件的贡献。可以先扫描层和位置，再对有效位置细化到 MLP、Attention head 或具体路径，检验哪些组件参与了该行为。[Heimersheim 与 Nanda，2024，第 2.2 节](https://arxiv.org/html/2404.15255)
+
 - **恢复与破坏方向**：clean activation 放入 corrupted 运行，检查能否恢复；反方向替换检查能否破坏。两者的证据不自动等价。
 - **替换基线**：真实样本 activation、均值和零向量回答不同的问题；零值未必是“没有信息”的自然状态。
 - **组件组合**：单独消融没有效应可能来自冗余路径，多个组件也可能共同必需。不能只按单点效应大小给机制排序。
@@ -80,6 +82,23 @@ h_{\ell,p}(x_r)\leftarrow h_{\ell,p}(x_c).
 - **解释范围**：效应支持该干预下的依赖关系，组件中具体携带的内容、使用路径和完整性仍需后续实验。
 
 关于 patching 的实验类型、指标和证据边界，配对阅读 [Zhang 与 Nanda 的方法比较](https://arxiv.org/abs/2309.16042) 与 [Heimersheim 与 Nanda 的教程](https://arxiv.org/abs/2404.15255)，重点看后者第 2—4 节。
+
+### 替换后为什么要重算下游
+
+设 $R$ 是完整残差状态， $U$ 是某个子层的写入， $F$ 是随后的子层（含其归一化）计算的更新。将 $U$ 置零是一种消融。比较它和原前向，得到
+
+```math
+\begin{aligned}
+R_{\mathrm{out}}&=R+U+F(R+U),\\
+\widetilde R_{\mathrm{out}}&=R+F(R),\\
+\widetilde R_{\mathrm{out}}-R_{\mathrm{out}}
+&=-U+\bigl[F(R)-F(R+U)\bigr].
+\end{aligned}
+```
+
+第一项 $-U$ 是直接移除的写入，第二项是后续子层因输入改变产生的响应。这个响应可能补偿也可能放大删除的影响。固定一次前向，将组件输出投影到词表，测量的是该读取器下的直接贡献。替换后重新前向，测量的则包含这些下游变化。
+
+McGrath 等在 Chinchilla 家族的 7B 模型上研究 CounterFact 事实回忆任务。用其他提示的激活替换某层 Attention 的输出后，部分后续 Attention 增加了对目标 token 的贡献，后期 MLP 的抑制作用也可能改变。作者将这种发生在前向计算中的补偿称为 Hydra Effect。它能解释为什么有些层的消融效应小于直接投影所提示的影响。[McGrath 等，2023，第 2—4 节](https://arxiv.org/html/2307.15771)
 
 ## 6. 第一份实验协议
 

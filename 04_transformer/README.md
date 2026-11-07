@@ -27,9 +27,9 @@
 | --- | --- |
 | [Attention 的基本计算](./01_attention.md) | 草稿 |
 | [Self-Attention](./02_self_attention.md) | 草稿 |
-| [Multi-Head Attention 与 MQA / GQA](./03_multi_head_attention.md) | 提纲 |
+| [Multi-Head Attention 与 MQA / GQA](./03_multi_head_attention.md) | 草稿 |
 | [Causal Attention Mask](./04_causal_attention_mask.md) | 草稿 |
-| [逐位置 MLP 与门控前馈层](./05_mlp.md) | 提纲 |
+| [逐位置 MLP 与门控前馈层](./05_mlp.md) | 草稿 |
 | [残差连接、LayerNorm 与 RMSNorm](./06_residual_and_layernorm.md) | 提纲 |
 | [Decoder-only Transformer 的完整前向过程](./07_decoder_only_transformer.md) | 提纲 |
 | [参数量、计算量与显存](./08_parameter_count_and_compute.md) | 提纲 |

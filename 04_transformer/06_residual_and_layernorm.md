@@ -8,6 +8,8 @@
 
 ## 1. 残差连接
 
+残差连接将子层输入与同形状的更新量相加。ResNet 的设计动机是让深层网络学习相对于输入的更新，缓解优化困难。Transformer 中各子层连续更新同一状态的计算过程见[残差流](../08_interpretability/residual_stream.md)。[He 等，2016](https://www.cv-foundation.org/openaccess/content_cvpr_2016/html/He_Deep_Residual_Learning_CVPR_2016_paper.html)
+
 - 写出残差相加与对应的形状约束，画出主支路和残差支路。
 - 从梯度传播与表示更新解释其作用，避免把它描述为保证训练成功的充分条件。
 

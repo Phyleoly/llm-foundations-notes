@@ -75,4 +75,4 @@ Interpretability 与 explainability 在文献中的用法并不完全统一。�
 4. **证据**：观察、探针或干预；对应基线、对照和留出样本。
 5. **边界**：已支持的范围、反例和仍可能成立的其他解释。
 
-下一步阅读 [残差流与 Logit Lens](./residual_stream_and_logit_lens.md)，把这些研究对象放回 Transformer 的实际计算中；验证标准见 [解释的评估](./evaluation_and_faithfulness.md)。
+下一步阅读 [残差流](./residual_stream.md)，把这些研究对象放回 Transformer 的实际计算中；验证标准见 [解释的评估](./evaluation_and_faithfulness.md)。

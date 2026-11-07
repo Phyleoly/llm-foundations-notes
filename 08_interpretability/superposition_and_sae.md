@@ -1,17 +1,22 @@
 # Superposition、特征与稀疏自编码器
 
-> 状态：提纲
+> 状态：草稿
 
-> 前置内容：[表示探针](./probing_representations.md)、[残差流](./residual_stream_and_logit_lens.md)；需要理解向量空间、线性组合与重建损失。
+> 前置内容：[表示探针](./probing_representations.md)、[残差流](./residual_stream.md)；需要理解向量空间、线性组合与重建损失。
 
 本篇要回答：为什么单个 neuron 不一定对应一个概念，稀疏自编码器又试图恢复怎样的表示单元？
 
 ## 1. 区分 neuron、方向与 feature
 
-- neuron 是选定表示中的一个坐标单元；某个属性也可能分布在多个坐标上。
-- 明确本文所说的 feature 是哪种可检验属性或计算单元，不把人给出的短标签直接当作完整定义。
-- 用 toy model 学习 superposition：在稀疏激活等条件下，模型可能用有限维度表示更多潜在特征，同时承受干扰。
-- 区分分布式表示、单个 neuron 的多义性与 superposition，不能只凭一张高激活样例图认定三者等价。
+MLP 的一个隐藏单元可以对多种模式激活，一个特征也可以分布在表示的多个坐标上。以残差流为例，若假设特征沿线性方向表示，一个位置的状态可以近似分解为
+
+```math
+r\approx\sum_{j=1}^{m}s_jf_j+\varepsilon.
+```
+
+其中 $f_j\in\mathbb R^d$ 是候选特征方向， $s_j$ 是当前样本的特征强度， $\varepsilon$ 是重建后剩余的部分。同一个前向也可以按子层写入分解，那是由计算图确定的精确求和。这里的特征方向则要从数据中估计，并检验它们表示什么。[残差流的加性展开](./residual_stream.md#2-计算图中的残差流)
+
+当特征数 $m\gt d$ 时，这些方向无法两两正交。Elhage 等在小型模型中发现，当输入特征稀疏、很少同时激活时，模型可以用有限维度表示更多特征，并借助非线性减轻干扰。这是受控条件下的叠加实例。对真实模型，还需要检验特征间是否存在干扰，以及学到的方向是否稳定。[Elhage 等，2022，Demonstrating Superposition](https://transformer-circuits.pub/2022/toy_model/index.html)
 
 ## 2. SAE 的最小计算对象
 
@@ -30,6 +35,8 @@ f=\sigma(hW_{\mathrm{enc}}+b_{\mathrm{enc}}),
 - 区分 encoder 的检测方向与 decoder 的重建方向，不能默认二者相同。
 
 ## 3. 怎样评价一个学到的特征
+
+Gemma Scope 在 Gemma 2 的多个观察点训练 SAE，其中包括 MLP 更新后的残差流。作者分别评估稀疏度、重建保真度和特征可解释性。对照其他模型时，要先找准对应的观察点，因为 Gemma 2 在 Attention 和 MLP 前后都包含归一化。[Lieberum 等，2024，第 3.1、4 节](https://arxiv.org/html/2408.05147)
 
 | 检查对象 | 要记录的证据 |
 | --- | --- |
