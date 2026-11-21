@@ -1,725 +1,333 @@
 # 离散 Token 表示与 Token Embedding
 
-> 状态：草稿
+> 状态：已核对
 
-> 前置内容：[文本空间与 Token 序列](../01_probability/01_token_probability_model.md#1-文本空间与-token-序列) 的基本约定。具体 tokenizer 算法属于相关阅读，见 [Tokenization](../03_tokenization/README.md)。
+> 前置内容：[文本空间与 Token 序列](../01_probability/01_token_probability_model.md#1-文本空间与-token-序列)。
 
-本篇要回答：离散 token ID 如何变成连续向量，embedding 的形状与语义边界是什么？
+## 1. 类别索引 Token ID
 
-语言模型首先将文本离散化为 token，并进一步将每个 token 转换为整数 token ID。然而，token ID 本身只是离散类别的索引，不能直接表达 token 之间的关系。
+把「我喜欢你」输入模型时，tokenizer 先将它切成「我 / 喜欢 / 你」。假设 **词表（Vocabulary）** 按「我、喜欢、你、他」排序，并从 $1$ 开始编号，这句话就会变成 $(1,2,3)$。这里的 $3$ 指向词表的第三项「你」。
 
-为了让神经网络处理这些离散符号，需要进一步将 token ID 映射到连续向量空间。
-## 1. Token ID：离散类别的索引
+记词表为 $\mathcal V$，其中有 $K$ 个条目。每个条目有一个唯一的整数索引，记作 $\mathrm{id}$。
 
-设模型词表为
-
-```math
-\mathcal V
-=
-\{v_1,v_2,\dots,v_K\},
-\qquad
-K=|\mathcal V|.
-```
-
-Tokenizer 为词表中的每个 token 分配一个唯一的整数索引。可以定义索引映射
-
-```math
-\mathrm{id}:
-\mathcal V
-\rightarrow
-\{1,2,\dots,K\}.
-```
-
-若
-
-```math
-x=v_k,
-```
-
-则
-
-```math
-\mathrm{id}(x)=k.
-```
-
-因此，token ID 的作用只是标识某个 token 对应词表中的哪一个离散类别。
-
-需要注意，token ID 的整数值本身通常没有语义上的数值意义。例如，若
-
-```math
-k_1\lt k_2,
-```
-
-并不能推出对应 token 在语义、句法或统计意义上存在某种大小关系。
-
-类似地，
-
-```math
-|k_1-k_2|
-```
-
-也不能用于衡量两个 token 的相似程度。
-
-因此，token ID 应当理解为 **categorical index**，而不是普通的数值特征。
-
-实际 tokenizer 通常输出一个整数序列，例如
-
-```math
-(k_1,k_2,\dots,k_T).
-```
-
-模型随后使用这些整数作为索引，从 embedding matrix 中读取对应的连续向量。
-
-> 数学推导中可以将 token ID 编号为 $1,\dots,K$；实际程序通常使用 $0,\dots,K-1$。这只是索引约定不同，不影响后续原理。
-
-## 2. One-hot Representation
-
-一种直接表示离散类别的方法是 one-hot representation。
-
-对于 token $v_k$，定义其 one-hot 列向量
-
-```math
-\mathbf e_k
-=
-\begin{bmatrix}
-e_1^{(k)}\\
-e_2^{(k)}\\
-\vdots\\
-e_K^{(k)}
-\end{bmatrix}
-\in
-\{0,1\}^K,
-```
-
-其中
-
-```math
-e_i^{(k)}
-=
-\begin{cases}
-1, & i=k,\\
-0, & i\neq k.
-\end{cases}
-```
-
-因此， $\mathbf e_k$ 只有第 $k$ 个分量为 $1$，其余分量均为 $0$。
-
-对于任意两个 token $v_m$ 和 $v_n$，有
-
-```math
-\mathbf e_m^\top\mathbf e_n
-=
-\begin{cases}
-1, & m=n,\\
-0, & m\neq n.
-\end{cases}
-```
-
-因此，不同 token 对应的 one-hot 向量彼此正交。
-
-当
-
-```math
-m\neq n
-```
-
-时，
-
-```math
-\begin{aligned}
-\|\mathbf e_m-\mathbf e_n\|_2^2
-&=
-\|\mathbf e_m\|_2^2
-+
-\|\mathbf e_n\|_2^2
--
-2\mathbf e_m^\top\mathbf e_n
-\\
-&=
-1+1-0
-\\
-&=
-2.
-\end{aligned}
-```
-
-从而
-
-```math
-\boxed{
-\|\mathbf e_m-\mathbf e_n\|_2
-=
-\sqrt 2
-}
-\qquad
-(m\neq n).
-```
-
-也就是说，在 one-hot 空间中，任意两个不同 token 之间的欧氏距离完全相同。
-
-对于不同 token，其 cosine similarity 同样满足
-
-```math
-\frac{
-\mathbf e_m^\top\mathbf e_n
-}{
-\|\mathbf e_m\|_2
-\|\mathbf e_n\|_2
-}
-=
-0,
-\qquad
-m\neq n.
-```
-
-因此，one-hot representation 能够区分不同离散类别，却没有预先编码类别之间的相似关系。
-
-即使两个 token 在语言中高度相关，它们与两个完全无关 token 一样，在 one-hot 空间中仍然具有相同的距离和内积关系。
-
-此外，one-hot 向量的维度等于词表大小
-
-```math
-K,
-```
-
-但每个向量只有一个非零元素，因此是一种高维稀疏表示。
-
-实际神经网络通常不会显式构造 one-hot 向量，而是直接使用 token ID 完成 embedding lookup。
-
-## 3. Embedding Matrix
-
-为了将离散 token 映射到连续向量空间，引入可学习的 embedding matrix。
-
-设 embedding dimension 为
-
-```math
-d_e,
-```
-
-定义
-
-```math
-E
-\in
-\mathbb R^{K\times d_e}.
-```
-
-将其按行写为
-
-```math
-E
-=
-\begin{bmatrix}
-E_{1,:}\\
-E_{2,:}\\
-\vdots\\
-E_{K,:}
-\end{bmatrix}.
-```
-
-其中第 $k$ 行
-
-```math
-E_{k,:}
-\in
-\mathbb R^{d_e}
-```
-
-对应词表中第 $k$ 个 token 的 embedding。
-
-因此，对于
-
 ```math
-x=v_k,
+\mathcal V = \{v_1,v_2,\dots,v_K\}, \qquad K=|\mathcal V|.
 ```
-
-定义
 
 ```math
-\boxed{
-\mathrm{Emb}(x)
-=
-E_{k,:}
-}.
+\mathrm{id}: \mathcal V \rightarrow \{1,2,\dots,K\}.
 ```
 
-于是，embedding matrix 可以理解为一个可学习的查找表：
-
-```math
-\boxed{
-\text{token ID }k
-\longrightarrow
-E_{k,:}\in\mathbb R^{d_e}
-}.
-```
+如果某个输入条目是 $x=v_k$，它的索引就是 $\mathrm{id}(x)=k$。一段文本切分成 $T$ 个 token 后，可以表示为 ID 序列 $(k_1,k_2,\dots,k_T)$。序列的排列保留了 token 的先后顺序。
 
-Embedding matrix 是模型参数的一部分，会在训练过程中通过梯度下降不断更新。
+单独看两个 ID，即使 $k_1\lt k_2$，也只能说明一个条目排在另一个条目前面。差值 $|k_1-k_2|$ 衡量的是编号的间隔。「喜欢」和「你」的编号相邻，只是因为词表把它们放在了第二项和第三项。
 
-需要注意，embedding 在初始化时通常并不天然具有“语义”。其中出现的词法、句法、共现模式以及其他统计结构，是在模型训练过程中逐渐形成的。
+下文手算时从 $1$ 开始编号，PyTorch 示例则用从 $0$ 开始的索引。编号和查找表的行序一一对应时，两种写法会选中相同的条目。具体切分方法见 [Tokenization](../03_tokenization/README.md)。
 
-## 4. Embedding Lookup
+## 2. One-hot
 
-给定 token ID
+### 2.1 用一个非零分量表示一个 token
 
-```math
-k,
-```
+既然编号可以定位类别，就可以把它用来选择向量中的一个坐标。给词表中的每个条目分配一个位置，属于哪个类别，就把对应的分量设为 $1$，其余分量设为 $0$。「你」的 ID 是 $3$，所以它的 one-hot 行向量是 $\mathbf e_3^\top=(0,0,1,0)$。
 
-embedding lookup 所做的操作就是从 embedding matrix 中读取第 $k$ 行：
+一般地，记第 $k$ 个 token 的 one-hot 列向量为 $\mathbf e_k$，第 $i$ 个分量为 $e_i^{(k)}$。各分量的取值由 $i$ 是否等于 $k$ 决定。
 
 ```math
-k
-\xrightarrow{\text{Embedding Lookup}}
-E_{k,:}.
+\mathbf e_k = \begin{bmatrix} e_1^{(k)}\\ e_2^{(k)}\\ \vdots\\ e_K^{(k)} \end{bmatrix} \in \{0,1\}^K,
 ```
-
-因此，
 
 ```math
-\boxed{
-\mathrm{Emb}(v_k)
-=
-E_{k,:}
-}.
+e_i^{(k)} = \begin{cases} 1, & i=k,\\ 0, & i\neq k. \end{cases}
 ```
 
-从线性代数的角度看，这一操作与 one-hot representation 和 embedding matrix 的矩阵乘法完全等价。
+### 2.2 one-hot 缺陷
 
-由于 $\mathbf e_k$ 是 $K$ 维列向量，
+one-hot 为每个类别分配了一个独立的坐标轴。每个向量的 L2 范数都是 $1$，内积也只取决于两个向量的非零分量是否位于同一位置。
 
 ```math
-E^\top\mathbf e_k
-=
-E_{k,:}^\top.
+\mathbf e_m^\top\mathbf e_n = \begin{cases} 1, & m=n,\\ 0, & m\neq n. \end{cases}
 ```
 
-等价地，将 one-hot 写成行向量后，
+当 $m\neq n$ 时，两者的内积为 $0$。因此，展开欧氏距离的平方后，只剩下两个向量各自的范数平方。
 
 ```math
-\boxed{
-\mathbf e_k^\top E
-=
-E_{k,:}
-}.
+\begin{aligned} \|\mathbf e_m-\mathbf e_n\|_2^2 &= \|\mathbf e_m\|_2^2 + \|\mathbf e_n\|_2^2 - 2\mathbf e_m^\top\mathbf e_n \\ &= 1+1-0 \\ &= 2. \end{aligned}
 ```
 
-因为
+对距离平方开方，再用同一个内积计算余弦相似度，可以得到
 
 ```math
-\begin{aligned}
-\mathbf e_k^\top E
-&=
-\sum_{i=1}^{K}
-e_i^{(k)}E_{i,:}
-\\
-&=
-E_{k,:}.
-\end{aligned}
+\boxed{ \|\mathbf e_m-\mathbf e_n\|_2 = \sqrt 2 } \qquad (m\neq n).
 ```
 
-One-hot 中只有第 $k$ 个位置的系数为 $1$，因此矩阵乘法实际上只保留了 $E$ 的第 $k$ 行。
-
-所以从数学上看，
-
 ```math
-\boxed{
-\text{Embedding Lookup}
-\equiv
-\text{One-hot}\times E
-}.
+\frac{ \mathbf e_m^\top\mathbf e_n }{ \|\mathbf e_m\|_2 \|\mathbf e_n\|_2 } = 0, \qquad m\neq n.
 ```
-
-二者得到完全相同的结果。
 
-但在实际实现中，没有必要显式构造维度为 $K$ 的 one-hot 向量再执行矩阵乘法。
+所以，「我」到「你」的距离和「我」到「喜欢」的距离完全一样。**在 one-hot 空间里，任意两个不同的类别都等距。**
 
-深度学习框架可以直接根据整数 token ID 读取 embedding matrix 中对应的行，从而避免构造高维稀疏向量和执行大量结果必然为零的乘法。
+one-hot 的宽度等于词表大小 $K$。词表越大，显式构造稠密数组的成本就越高，尽管每个向量只有一个非零分量。这是高维稀疏表示的存储开销。
 
-因此，embedding layer 可以概括为
+## 3. Embedding Matrix 把类别索引变成可学习的向量
 
-```math
-\boxed{
-\text{token ID}
-\longrightarrow
-\text{row lookup in }E
-\longrightarrow
-\text{embedding vector}
-}.
-```
-
-## 5. Token 序列的 Embedding
-
-对于长度为 $T$ 的 token ID 序列
-
-```math
-(k_1,k_2,\dots,k_T),
-```
+### 3.1 词表有多少项，矩阵就有多少行
 
-逐个执行 embedding lookup 后得到
+要让向量之间的远近可变，可以给每个词表条目分配一个可学习的向量，再沿用 ID 来定位它。取向量维度为 $d_e$，将 $K$ 个向量按词表顺序堆叠，就得到 **词嵌入矩阵（Embedding Matrix）** $E \in \mathbb R^{K\times d_e}$。
 
 ```math
-X_{\mathrm{emb}}
-=
-\begin{bmatrix}
-E_{k_1,:}\\
-E_{k_2,:}\\
-\vdots\\
-E_{k_T,:}
-\end{bmatrix}
-\in
-\mathbb R^{T\times d_e}.
+E = \begin{bmatrix} E_{1,:}\\ E_{2,:}\\ \vdots\\ E_{K,:} \end{bmatrix}.
 ```
 
-因此，离散 token ID 序列
+取出第 $k$ 行，得到的是一个 $d_e$ 维向量 $E_{k,:} \in \mathbb R^{d_e}$。因此，当输入条目为 $x=v_k$ 时，ID 就可以作为索引，从 **查找表（Lookup Table）** 中读出对应行。
 
 ```math
-(k_1,k_2,\dots,k_T)
+\boxed{ \mathrm{Emb}(x) = E_{k,:} }.
 ```
 
-被转换为连续向量序列
-
 ```math
-X_{\mathrm{emb}}
-\in
-\mathbb R^{T\times d_e}.
+\boxed{ \text{token ID }k \longrightarrow E_{k,:}\in\mathbb R^{d_e} }.
 ```
-
-这里得到的 token embedding 本身是 **context-independent representation**。
-
-也就是说，对于同一个 token ID $k$，无论它出现在什么上下文中，embedding lookup 都会读取同一个向量
 
-```math
-E_{k,:}.
-```
+继续用四项词表，把每行设为两个分量。下表的坐标仅用于演算，实际模型会根据训练损失更新这些坐标。
 
-上下文相关的信息需要通过后续 Transformer 层进一步计算，并逐渐形成在 contextual hidden states 中。
+| Token | ID | One-hot 行向量 $\mathbf e_k^\top$ | Embedding 行向量 $E_{k,:}$ |
+| --- | ---: | --- | --- |
+| 我 | 1 | $(1,0,0,0)$ | $(0.2,0.8)$ |
+| 喜欢 | 2 | $(0,1,0,0)$ | $(0.6,0.3)$ |
+| 你 | 3 | $(0,0,1,0)$ | $(0.1,0.9)$ |
+| 他 | 4 | $(0,0,0,1)$ | $(0.4,0.7)$ |
 
-因此，应当区分
+词表固定后，token 和行号的对应关系也随之固定。一个 token 在序列里出现多次时，各位置读出的向量来自同一行，反向传播经由这些位置传回的梯度也会累加到该行。
 
-```math
-\boxed{
-\text{token embedding}
-}
-```
+### 3.2 一次查表，等价于 one-hot 左乘矩阵
 
-与
+对任意 ID $k$，embedding lookup 所做的就是取出第 $k$ 行。
 
 ```math
-\boxed{
-\text{contextual hidden state}
-}.
+k \xrightarrow{\text{Embedding Lookup}} E_{k,:}.
 ```
-
-前者主要提供 token 的初始连续表示，后者则依赖当前上下文。
 
-## 6. Embedding Dimension 与 Model Dimension
-
-需要区分 embedding dimension
-
 ```math
-d_e
+\boxed{ \mathrm{Emb}(v_k) = E_{k,:} }.
 ```
 
-与 Transformer 的 model dimension
+表中的「你」可以用来验证这件事。它的 one-hot 行向量左乘 $E$ 时，每个分量都充当相应矩阵行的权重，乘积里只留下系数为 $1$ 的第三行。
 
 ```math
-d_{\mathrm{model}}.
+\begin{aligned} \mathbf e_3^\top E &=0\,E_{1,:}+0\,E_{2,:}+1\,E_{3,:}+0\,E_{4,:}\\ &=E_{3,:}=(0.1,0.9). \end{aligned}
 ```
-
-其中， $d_e$ 表示 embedding lookup 输出向量的宽度，而 $d_{\mathrm{model}}$ 通常表示 Transformer residual stream 或 hidden states 的宽度。
 
-很多 Transformer 模型直接令
+上面的 one-hot 也可以写成列向量。此时， $E^\top$ 的第 $k$ 列对应原矩阵的第 $k$ 行，右乘 $\mathbf e_k$ 就会选中这列，得到 $E^\top\mathbf e_k = E_{k,:}^\top$。将两边转置，就回到行向量的写法。
 
 ```math
-d_e=d_{\mathrm{model}},
+\boxed{ \mathbf e_k^\top E = E_{k,:} }.
 ```
 
-但这并不是数学上的必要条件。
+乘法的形状是 $(1\times K)$ 乘 $(K\times d_e)$，输出为 $(1\times d_e)$。按行展开时，第 $i$ 行乘上 $e_i^{(k)}$。由于只有第 $k$ 行的系数为 $1$，加权和就等于这一行本身。
 
-### 6.1 $d_e=d_{\mathrm{model}}$
-
-当
-
 ```math
-d_e=d_{\mathrm{model}}
+\begin{aligned} \mathbf e_k^\top E &= \sum_{i=1}^{K} e_i^{(k)}E_{i,:} \\ &= E_{k,:}. \end{aligned}
 ```
-
-时，
 
 ```math
-X_{\mathrm{emb}}
-\in
-\mathbb R^{T\times d_{\mathrm{model}}},
+\boxed{ \text{Embedding Lookup} \equiv \text{One-hot}\times E }.
 ```
 
-token embedding 已经具有 Transformer 所需要的宽度，因此不需要额外的维度投影。
+实际实现可以直接用整数取行，省去显式构造 one-hot 数组的开销。
 
-需要注意，**维度是否匹配**与**如何引入位置信息**是两个不同的问题。
-
-有些模型使用 learned absolute positional embedding，并将其与 token embedding 相加；另一些模型使用 RoPE 等机制，在 attention 内部对 query 和 key 注入位置信息。
-
-因此，不能把所有 Transformer 的输入统一写成
-
 ```math
-\text{token embedding}
-+
-\text{position embedding}.
+\boxed{ \text{token ID} \longrightarrow \text{row lookup in }E \longrightarrow \text{embedding vector} }.
 ```
-
-位置表示的具体形式将在后续章节单独讨论。
-
-### 6.2 $d_e\neq d_{\mathrm{model}}$
 
-如果
+## 4. 从一串 ID 到一批向量
 
-```math
-d_e\neq d_{\mathrm{model}},
-```
+### 4.1 查表保留序列顺序，并在末尾增加一个维度
 
-可以使用线性映射
+给定一条长度为 $T$ 的序列 $(k_1,k_2,\dots,k_T)$，按输入顺序对每个位置查表，再把拿到的向量依次叠成矩阵。
 
 ```math
-W_{\mathrm{in}}
-\in
-\mathbb R^{d_e\times d_{\mathrm{model}}}
+X_{\mathrm{emb}} = \begin{bmatrix} E_{k_1,:}\\ E_{k_2,:}\\ \vdots\\ E_{k_T,:} \end{bmatrix} \in \mathbb R^{T\times d_e}.
 ```
 
-将 token embedding 投影到模型宽度：
+输入 $(k_1,k_2,\dots,k_T)$ 有 $T$ 个整数，输出 $X_{\mathrm{emb}} \in \mathbb R^{T\times d_e}$ 有 $T$ 行，每行包含一个 token 的 $d_e$ 个分量。把开头的「我喜欢你」换成「你喜欢我」，ID 序列随之变成 $(3,2,1)$，拼出的矩阵如下。
 
 ```math
-\boxed{
-H^{(0)}
-=
-X_{\mathrm{emb}}W_{\mathrm{in}}
-}.
+X_{\mathrm{emb}}= \begin{bmatrix} E_{3,:}\\ E_{2,:}\\ E_{1,:} \end{bmatrix} = \begin{bmatrix} 0.1 & 0.9\\ 0.6 & 0.3\\ 0.2 & 0.8 \end{bmatrix}.
 ```
 
-其中
-
-```math
-X_{\mathrm{emb}}
-\in
-\mathbb R^{T\times d_e},
-```
+这次输出有三行，对应句子的三个位置。查找表仍有四行，对应词表中的四个条目。处理一批序列时，各样本共用同一张表，批次维度和序列维度会原样保留。
 
-所以
+| 输入 | ID 张量形状 | 查表后的形状 |
+| --- | --- | --- |
+| 一条长度为 $T$ 的序列 | $(T,)$ | $(T,d_e)$ |
+| $B$ 条对齐到长度 $T$ 的序列 | $(B,T)$ | $(B,T,d_e)$ |
 
-```math
-H^{(0)}
-\in
-\mathbb R^{T\times d_{\mathrm{model}}}.
-```
+### 4.2 同一个「我」换了位置，会发生什么？
 
-若线性层包含 bias，则
+在「我喜欢你」和「你喜欢我」中，「我」分别在第一个和第三个位置。查表时，两处的 ID 相同，所以都读出词表的第一行，再放到各自对应的输出位置。
 
-```math
-H^{(0)}
-=
-X_{\mathrm{emb}}W_{\mathrm{in}}
-+
-b_{\mathrm{in}},
-```
+| 句子 | 「我」在序列中的位置 | 查到的向量 |
+| --- | ---: | --- |
+| 我 / 喜欢 / 你 | 第 1 个 | $E_{1,:}=(0.2,0.8)$ |
+| 你 / 喜欢 / 我 | 第 3 个 | $E_{1,:}=(0.2,0.8)$ |
 
-其中
+固定 $E$ 后，这个规律对任意 ID $k$ 都成立。ID 决定读取向量 $E_{k,:}$，所在位置决定该向量放到输出的第几行。查表得到的初始表示称为 $\boxed{ \text{token embedding} }$。
 
-```math
-b_{\mathrm{in}}
-\in
-\mathbb R^{d_{\mathrm{model}}}.
-```
+「我」在两句话里分别充当主语和宾语。这种区别来自词序和其他 token。后续 Transformer 层在计算 $\boxed{ \text{contextual hidden state} }$ 时会用到位置线索和可见上下文，于是两个「我」可以由相同的初始向量得到不同的隐藏状态。
 
-这里的 $H^{(0)}$ 只表示完成维度映射后的初始连续表示；实际模型还可能通过其他机制加入位置信息。
+### 4.3 用 PyTorch 验证
 
-### 6.3 参数量
+把这两条句子放在同一个 batch，查表应得到形状为 $(2,3,2)$ 的张量。代码同时核对直接查表与 one-hot 矩阵乘法的结果，以及两处「我」读出的向量。
 
-如果直接令
+```python
+import torch
+from torch import nn
+from torch.nn import functional as F
 
-```math
-d_e=d_{\mathrm{model}},
-```
+# 代码从 0 编号，四行依次对应“我、喜欢、你、他”。
+weights = torch.tensor([
+    [0.2, 0.8],
+    [0.6, 0.3],
+    [0.1, 0.9],
+    [0.4, 0.7],
+])
+embedding = nn.Embedding.from_pretrained(weights, freeze=False)
+input_ids = torch.tensor([[0, 1, 2], [2, 1, 0]], dtype=torch.long)
 
-那么输入 embedding matrix 包含
+# 保留批次和序列维度，在末尾增加向量维度。
+vectors = embedding(input_ids)
+print(vectors.shape)  # torch.Size([2, 3, 2])
 
-```math
-\boxed{
-K d_{\mathrm{model}}
-}
+# 仅为核对等价性，在此显式构造 one-hot。
+one_hot = F.one_hot(input_ids, num_classes=embedding.num_embeddings)
+torch.testing.assert_close(one_hot.to(vectors.dtype) @ embedding.weight, vectors)
+torch.testing.assert_close(vectors[0, 0], vectors[1, 2])
 ```
-
-个参数。
-
-如果采用较小的 embedding dimension
 
-```math
-d_e\lt d_{\mathrm{model}}
-```
+## 5. Embedding 维度如何接上 Transformer？
 
-并额外使用输入投影，那么忽略 bias 时，embedding 与输入投影一共包含
+上节用两列的词表得到两维向量。一般地，查表输出的宽度记为 $d_e$，Transformer 残差流中每个位置的宽度记为 $d_{\mathrm{model}}$。当模型设定 $d_e=d_{\mathrm{model}}$ 时，查表得到的向量已满足宽度要求。两个维度也可以独立设置，再用投影连接。
 
-```math
-\boxed{
-K d_e
-+
-d_e d_{\mathrm{model}}
-}
-```
+### 5.1 查表宽度与模型宽度相同
 
-个参数。
+当 $d_e=d_{\mathrm{model}}$ 时，查表结果已经具有形状 $X_{\mathrm{emb}} \in \mathbb R^{T\times d_{\mathrm{model}}}$，因此可以省去输入投影。
 
-这里第二项是
+位置线索仍要通过模型所采用的位置机制引入。例如，采用可学习的绝对位置嵌入时，模型会给每个位置取一个相同宽度的向量，并在输入处相加。
 
 ```math
-d_e d_{\mathrm{model}},
+\text{token embedding} + \text{position embedding}.
 ```
-
-而不是
 
-```math
-K d_e d_{\mathrm{model}}.
-```
+使用 RoPE 的模型则会在注意力层中按位置旋转 query 和 key。具体方式见 [位置表示](./02_position_representation.md) 和 [RoFormer §3.2](https://arxiv.org/html/2104.09864v5#S3.SS2)。
 
-原因是 $W_{\mathrm{in}}$ 是所有 token 共享的一组参数，而不是为词表中的每个 token 分别定义一个投影矩阵。
+### 5.2 查表宽度与模型宽度不同
 
-因此，当词表规模 $K$ 很大、且
+当 $d_e\neq d_{\mathrm{model}}$ 时，让所有位置共享一个投影矩阵 $W_{\mathrm{in}} \in \mathbb R^{d_e\times d_{\mathrm{model}}}$，就能把查到的向量统一映射到模型宽度。
 
 ```math
-d_e\ll d_{\mathrm{model}},
+\boxed{ H^{(0)} = X_{\mathrm{emb}}W_{\mathrm{in}} }.
 ```
 
-factorized embedding parameterization 有可能减少与输入 embedding 相关的参数量。
+查表结果的形状是 $X_{\mathrm{emb}} \in \mathbb R^{T\times d_e}$。右乘 $W_{\mathrm{in}}$ 时，两个矩阵内侧的 $d_e$ 对齐，输出变为 $H^{(0)} \in \mathbb R^{T\times d_{\mathrm{model}}}$。因此变化的是每个位置的宽度，仍然有 $T$ 个位置。
 
-不过，这只是一种可选的架构设计。许多 decoder-only Transformer 仍然直接采用
+如果投影层带有偏置，它会给每一行加上同一个向量。其维度为 $b_{\mathrm{in}} \in \mathbb R^{d_{\mathrm{model}}}$，与投影后的向量宽度一致。
 
 ```math
-d_e=d_{\mathrm{model}}.
+H^{(0)} = X_{\mathrm{emb}}W_{\mathrm{in}} + b_{\mathrm{in}},
 ```
-
-## 7. Embedding Space 的几何与语义边界
-
-由于训练后的 embedding 是连续向量，因此可以分析 embedding space 中的几何关系。
-
-设两个 token 的 embedding 为
 
-```math
-\mathbf u_i,\mathbf u_j
-\in
-\mathbb R^{d_e}.
-```
+### 5.3 参数量怎么算？
 
-一种常见度量是 Euclidean distance：
+两种方式的输出都有 $d_{\mathrm{model}}$ 列，输入端的参数量取决于有没有分开存储词表和投影。直接设 $d_e=d_{\mathrm{model}}$ 时，词表的每一行都有 $d_{\mathrm{model}}$ 个参数。整张表的参数量等于行数乘以列数。
 
 ```math
-\boxed{
-d(\mathbf u_i,\mathbf u_j)
-=
-\|\mathbf u_i-\mathbf u_j\|_2
-}.
+\boxed{ K d_{\mathrm{model}} }
 ```
 
-Euclidean distance 同时受到向量方向和模长的影响。
+如果选择 $d_e\lt d_{\mathrm{model}}$，词表中的每一行会变短，同时需要另存一个输入投影矩阵。参数量由这两部分相加得到。
 
-对于非零向量，也可以使用 cosine similarity：
-
 ```math
-\boxed{
-\cos
-(\mathbf u_i,\mathbf u_j)
-=
-\frac{
-\mathbf u_i^\top\mathbf u_j
-}{
-\|\mathbf u_i\|_2
-\|\mathbf u_j\|_2
-}
-}.
+\boxed{ K d_e + d_e d_{\mathrm{model}} }
 ```
 
-Cosine similarity 主要描述两个向量方向之间的关系，而对整体尺度相对不敏感。
+这里的投影成本为 $d_e d_{\mathrm{model}}$，因为所有词表条目共用一个矩阵。如果把这一项写成 $K d_e d_{\mathrm{model}}$，就等于把同一个投影重复计入 $K$ 次。
 
-训练后的 embedding 可能编码与以下因素有关的结构：
+当词表很大、同时 $d_e\ll d_{\mathrm{model}}$ 时，词表矩阵节省的参数可能比新增的投影参数更多。ALBERT 使用了这样的 **分解式 embedding 参数化**。将它与 $d_e=d_{\mathrm{model}}$ 时的直接查表并列，参数量如下。 [ALBERT §3.1](https://arxiv.org/html/1909.11942v6#S3.SS1)
 
-- token 的词法模式；
-- 句法使用方式；
-- token 共现关系；
-- token 频率；
-- 与 next-token prediction 目标相关的其他统计规律。
+| 做法 | 查表输出形状 | 输入投影 | 参数量（忽略偏置） |
+| --- | --- | --- | --- |
+| 直接使用模型宽度 | $(T,d_{\mathrm{model}})$ | 无 | $K d_{\mathrm{model}}$ |
+| 先查表，再投影 | $(T,d_e)$ | $W_{\mathrm{in}}$ | $K d_e+d_e d_{\mathrm{model}}$ |
 
-因此，一些在模型中具有相似使用模式的 token，可能在 embedding space 中表现出某些几何上的相似性。
+## 6. Embedding 空间里，两个向量接近意味着什么？
 
-但是，不能简单地将任意 embedding distance 或 cosine similarity 直接解释为人类语言学意义上的“语义距离”。
+### 6.1 欧氏距离和余弦相似度各看一件事
 
-Embedding matrix 的目标并不是单独学习一个具有明确语言学解释的语义空间，而是作为整个语言模型的一部分共同优化 next-token prediction 等训练目标。
+回到上面的二维词表。「我」和「你」的两个分量都只相差 $0.1$，「我」和「喜欢」则分别相差 $0.4$ 和 $0.5$。按欧氏距离衡量，前一对更接近。向量之间的远近现在由坐标决定，训练可以改变这些坐标。
 
-更重要的是，输入 token embedding 本身是静态的、context-independent 的。
+把两行 embedding 写成列向量 $\mathbf u_i=E_{i,:}^{\top}$ 和 $\mathbf u_j=E_{j,:}^{\top}$，其中 $\mathbf u_i,\mathbf u_j \in \mathbb R^{d_e}$。**欧氏距离**衡量两个点相隔多远，向量的长度和方向都会影响结果。
 
-同一个 token 在不同上下文中首先读取相同的
-
 ```math
-E_{k,:},
+\boxed{ d(\mathbf u_i,\mathbf u_j) = \|\mathbf u_i-\mathbf u_j\|_2 }.
 ```
-
-而其真正依赖上下文的表示通常会在 Transformer 更深层的 hidden states 中逐渐形成。
 
-因此，
+如果想比较方向，可以先将两个非零向量分别除以各自的范数，再计算内积。这就是 **余弦相似度**。把其中任一个向量乘以正数，改变的只是长度，归一化后的方向保持不变。
 
 ```math
-\boxed{
-\text{复杂的上下文语义结构}
-\not\equiv
-\text{input embedding 本身}
-}.
+\boxed{ \cos (\mathbf u_i,\mathbf u_j) = \frac{ \mathbf u_i^\top\mathbf u_j }{ \|\mathbf u_i\|_2 \|\mathbf u_j\|_2 } }.
 ```
 
-## 8. Special Token 与 Padding
+取 $A=(1,0)$、 $B=(2,0)$、 $C=(1,1)$。从点 $A$ 到 $B$ 或 $C$ 都只移动一个单位。从原点看， $A$ 与 $B$ 同向，而 $A$ 与 $C$ 的夹角是 $45^\circ$。
 
-如果 BOS、EOS、UNK 等 special token 被纳入模型词表，那么从 embedding layer 的角度看，它们和普通 token 使用完全相同的数学操作。
+| 向量对 | 欧氏距离 | 余弦相似度 |
+| --- | ---: | ---: |
+| $A$ 与 $B$ | $1$ | $1$ |
+| $A$ 与 $C$ | $1$ | $\sqrt{2}/2$ |
 
-例如，若 EOS 的 token ID 为
+### 6.2 向量相近可以提供什么线索？
 
-```math
-k_{\mathrm{EOS}},
-```
+前面的坐标是演算用的。实际模型会在预测下一 token 等训练目标下更新 embedding。训练后的向量接近，可能反映相似的句法角色或共现模式，也可能与分词粒度、词形或出现频率有关。要判断两个 token 是否近义，还得结合它们实际代表的文本片段和用法。
 
-那么其 embedding 为
+这里也能看出输入向量与上下文隐藏状态的区别。一个 token 可能有多种用法，但在每一次查表时，它都从同一行 $E_{k,:}$ 取向量。具体用法要等后续层结合上下文，才会反映在隐藏状态里。
 
 ```math
-E_{k_{\mathrm{EOS}},:}.
+\boxed{ \text{复杂的上下文语义结构} \not\equiv \text{input embedding 本身} }.
 ```
 
-Embedding layer 本身并不会因为这个 token 表示“序列结束”而采用不同的 lookup 规则。
+## 7. 特殊 Token、Padding 与训练目标
 
-Special token 的特殊功能来自 tokenizer、训练数据、模型结构以及生成过程等更高层约定。
+### 7.1 特殊 Token 也通过同一张表取向量
 
-此外，并非所有 tokenizer 或语言模型都一定定义 BOS、EOS、UNK 或 PAD。具体包含哪些 special token 取决于 tokenizer 和模型设计。
+第 4 节的两句话恰好等长。当一批序列的长度不同，需要先把它们对齐才能组成矩形张量。最常见的做法是用 **PAD** 补齐短序列。此外，词表还可能包含标记开始的 **BOS**、标记结束的 **EOS**，以及某些 tokenizer 用来表示未知片段的 **UNK**。
 
-### Padding
+特殊 token 也有自己的 ID，查表的方式与普通条目相同。例如，输入 EOS 时，用它的 ID $k_{\mathrm{EOS}}$ 取出向量 $E_{k_{\mathrm{EOS}},:}$。当 EOS 出现在训练标签里，模型会学习何时预测它。实际生成时，解码程序根据配置的结束 ID 决定何时停止。
 
-如果模型定义了 PAD token，那么 PAD 同样对应一个 token ID，并可以对应 embedding matrix 中的一行。
+### 7.2 PAD 有向量，注意力仍要知道哪些位置是补齐的
 
-但是，padding 的完整语义并不只由 embedding layer 决定。
+把「我 / 喜欢 / 你」和「你」放在同一个 batch。加上 BOS 和 EOS 后，两条序列分别占 $5$ 和 $3$ 个位置，所以短序列需要在右侧补两个 PAD。
 
-在 Transformer 中，padding position 通常还需要结合 attention mask，使其不作为正常上下文参与 attention。
+| 样本 | 位置 1 | 位置 2 | 位置 3 | 位置 4 | 位置 5 |
+| --- | --- | --- | --- | --- | --- |
+| 我 / 喜欢 / 你 | BOS | 我 | 喜欢 | 你 | EOS |
+| 你 | BOS | 你 | EOS | PAD | PAD |
 
-训练时也通常需要通过 loss mask 或类似 `ignore_index` 的机制，避免 padding target 对损失产生影响。
+输入 ID 的形状是 $(2,5)$，查表结果为 $(2,5,d_e)$。补出来的两个位置也有向量，都来自 $E_{k_{\mathrm{PAD}},:}$。这里的 $\boxed{ \text{PAD token embedding} }$ 是查表结果。后续要用位置标记来确定 $\boxed{ \text{padding position 的 masking 语义} }$。
 
-某些 embedding API 还允许指定类似 `padding_idx` 的参数，使对应 embedding row 不按照普通 token 的方式更新。
+本例用 $1$ 表示有效位置，用 $0$ 表示补齐位置，两条序列的 **padding mask** 分别为 $(1,1,1,1,1)$ 和 $(1,1,1,0,0)$。对有效 query，注意力可以据此排除 PAD 对应的 key。
 
-具体初始化和梯度行为应以实际使用框架的定义为准。
+自回归模型还使用 **causal mask**，把当前位置之后的 token 遮住。这里采用右侧补齐，因此末尾的 PAD 全都落在有效 query 的未来，已经被因果约束挡住。
 
-因此，需要区分
+### 7.3 标签移位后，保留预测 EOS 的损失
 
-```math
-\boxed{
-\text{PAD token embedding}
-}
-```
+注意力处理的是每个位置能读哪些输入，训练损失则取决于哪些预测目标有效。做下一 token 预测时，位置 $t$ 的输出对应位置 $t+1$ 的 token。移动标签后，短序列的四组配对如下。 [Teacher Forcing 与标签移位](../01_probability/02_teacher_forcing_and_label_shifting.md#3-label-shifting)
 
-和
+| 当前输入 | 下一个 token | 训练标签 |
+| --- | --- | --- |
+| BOS | 你 | 「你」的 ID |
+| 你 | EOS | EOS 的 ID |
+| EOS | PAD | 忽略 |
+| 第一个 PAD | PAD | 忽略 |
 
-```math
-\boxed{
-\text{padding position 的 masking 语义}
-}.
-```
+BOS 所在位置学习预测「你」，「你」所在位置学习预测 EOS。后面两个目标来自补齐，可以把它们的类别索引设为 `-100`，再由 `CrossEntropyLoss(ignore_index=-100)` 跳过。若 EOS 的 ID 还兼作补齐值，应根据目标位置的有效标记来选择忽略哪些标签，使真实的 EOS 目标仍能参与训练。 [PyTorch CrossEntropyLoss 文档](https://docs.pytorch.org/docs/2.15/generated/torch.nn.CrossEntropyLoss.html)
 
-前者属于 representation，后者还涉及 attention 和训练过程。
+如果还要控制 PAD 行从查表操作接收的梯度，可以给 `nn.Embedding` 设置 `padding_idx`。这个设置使指定行从查表操作收到的梯度为零。注意力的可见范围和训练损失纳入的目标，仍由各自使用的 mask 和标签决定。 [PyTorch Embedding 文档](https://docs.pytorch.org/docs/2.15/generated/torch.nn.Embedding.html)

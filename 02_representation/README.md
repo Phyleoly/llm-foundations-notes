@@ -23,7 +23,7 @@
 <!-- notes:index:start -->
 | 笔记 | 状态 |
 | --- | --- |
-| [离散 Token 表示与 Token Embedding](./01_token_embedding.md) | 草稿 |
+| [离散 Token 表示与 Token Embedding](./01_token_embedding.md) | 已核对 |
 | [位置表示](./02_position_representation.md) | 草稿 |
 | [NoPos / NoPE 论文阅读与复现](./03_nope_reading_list.md) | 草稿 |
 | [输出投影与 Weight Tying](./04_output_projection_and_weight_tying.md) | 提纲 |
